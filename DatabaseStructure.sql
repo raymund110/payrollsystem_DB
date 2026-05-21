@@ -1,6 +1,9 @@
+CREATE DATABASE IF NOT EXISTS payrollsystem_db;
+USE payrollsystem_db;
+
 -- Employee Self Service Portal
 -- employee table
-CREATE TABLE employee (
+CREATE TABLE IF NOT EXISTS employee (
 	employee_id VARCHAR(10) PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -24,7 +27,7 @@ CREATE TABLE employee (
 );
 
 -- leave_type table
-CREATE TABLE leave_type (
+CREATE TABLE IF NOT EXISTS leave_type (
     leave_type_id INT PRIMARY KEY AUTO_INCREMENT,
     leave_name VARCHAR(50) UNIQUE NOT NULL,
     paid TINYINT(1) NOT NULL DEFAULT 1,
@@ -33,7 +36,7 @@ CREATE TABLE leave_type (
 );
 
 -- leave_request table
-CREATE TABLE leave_request (
+CREATE TABLE IF NOT EXISTS leave_request (
     leave_type_id INT NOT NULL,
     leave_request_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     employee_id VARCHAR(10) NOT NULL,
@@ -56,24 +59,60 @@ CREATE TABLE leave_request (
     CHECK (end_date >= start_date)
 );
 
+-- Normalize user_account
+-- role table
+CREATE TABLE IF NOT EXISTS role (
+    role_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- permission table
+CREATE TABLE IF NOT EXISTS permission (
+    permission_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    permission_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- role_permission junction table
+CREATE TABLE IF NOT EXISTS role_permission (
+    role_id INT UNSIGNED NOT NULL,
+    permission_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (role_id, permission_id),
+
+    CONSTRAINT fk_rp_role
+    FOREIGN KEY (role_id)
+    REFERENCES role(role_id)
+    ON DELETE CASCADE,
+
+    CONSTRAINT fk_rp_permission
+    FOREIGN KEY (permission_id)
+    REFERENCES permission(permission_id)
+    ON DELETE CASCADE
+);
+
 -- user_account table
-CREATE TABLE user_account (
-    username VARCHAR(50) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS user_account (
+    employee_id VARCHAR(10) PRIMARY KEY, -- no employee = no account shared PK
+    username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(128) NOT NULL,
-    role ENUM ('ADMIN','HR','PAYROLL','EMPLOYEE') NOT NULL DEFAULT 'EMPLOYEE',
-    employee_id VARCHAR(10) UNIQUE,
+    role_id INT UNSIGNED NOT NULL DEFAULT 3, -- 3 = employee
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     -- Foreign key relationship
+    -- Employee table
     CONSTRAINT fk_user_employee
     FOREIGN KEY (employee_id)
     REFERENCES employee(employee_id)
-    ON DELETE SET NULL
+    ON DELETE CASCADE,
+    -- Role table
+    CONSTRAINT fk_user_role
+    FOREIGN KEY (role_id)
+    REFERENCES role(role_id)
+    ON DELETE RESTRICT
 );
 
 
 -- Time & Attendance Tracking
 -- attendance table
-CREATE TABLE attendance (
+CREATE TABLE IF NOT EXISTS attendance (
     employee_id VARCHAR(10),
     work_date DATE,
     hours_worked DECIMAL(5, 2) NOT NULL,
@@ -87,7 +126,7 @@ CREATE TABLE attendance (
 );
 
 -- overtime_type table
-CREATE TABLE overtime_type (
+CREATE TABLE IF NOT EXISTS overtime_type (
     overtime_type_id INT PRIMARY KEY AUTO_INCREMENT,
     description VARCHAR(50) NOT NULL,
     rate_multiplier DECIMAL(4, 2) NOT NULL,
@@ -95,7 +134,7 @@ CREATE TABLE overtime_type (
 );
 
 -- overtime_entry table
-CREATE TABLE overtime_entry (
+CREATE TABLE IF NOT EXISTS overtime_entry (
     overtime_type_id INT NOT NULL,
     overtime_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     employee_id VARCHAR(10) NOT NULL,
@@ -117,21 +156,21 @@ CREATE TABLE overtime_entry (
 
 -- Payroll Admin Role
 -- payroll_deduction_type table
-CREATE TABLE payroll_deduction_type (
+CREATE TABLE IF NOT EXISTS payroll_deduction_type (
     deduction_type_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(50) UNIQUE NOT NULL,
     government_mandated TINYINT(1) NOT NULL DEFAULT 1
 );
 
 -- payroll_earning_type table
-CREATE TABLE payroll_earning_type (
+CREATE TABLE IF NOT EXISTS payroll_earning_type (
     earning_type_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(50) UNIQUE NOT NULL,
     taxable TINYINT(1) NOT NULL DEFAULT 1
 );
 
 -- withholding_tax_bracket table
-CREATE TABLE withholding_tax_bracket (
+CREATE TABLE IF NOT EXISTS withholding_tax_bracket (
     bracket_id INT PRIMARY KEY AUTO_INCREMENT,
     min_salary DECIMAL(10,2) NOT NULL,
     max_salary DECIMAL(10,2),
@@ -143,7 +182,7 @@ CREATE TABLE withholding_tax_bracket (
 );
 
 -- payroll table
-CREATE TABLE payroll (
+CREATE TABLE IF NOT EXISTS payroll (
     payroll_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     employee_id VARCHAR(10) NOT NULL,
     pay_period_start DATE NOT NULL,
@@ -163,7 +202,7 @@ CREATE TABLE payroll (
 );
 
 -- payroll_earning table
-CREATE TABLE payroll_earning (
+CREATE TABLE IF NOT EXISTS payroll_earning (
     earning_type_id INT NOT NULL,
     payroll_id BIGINT UNSIGNED NOT NULL,
     earning_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -182,7 +221,7 @@ CREATE TABLE payroll_earning (
 );
 
 -- payroll_deduction table
-CREATE TABLE payroll_deduction (
+CREATE TABLE IF NOT EXISTS payroll_deduction (
     bracket_id INT NOT NULL,
     deduction_type_id INT NOT NULL,
     payroll_id BIGINT UNSIGNED NOT NULL,
@@ -207,20 +246,20 @@ CREATE TABLE payroll_deduction (
 
 -- Salary Calculation
 -- depertment table
-CREATE TABLE department (
+CREATE TABLE IF NOT EXISTS department (
     dept_id INT PRIMARY KEY AUTO_INCREMENT,
     dept_name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT
 );
 
 -- position table
-CREATE TABLE position (
+CREATE TABLE IF NOT EXISTS position (
     position_id INT PRIMARY KEY AUTO_INCREMENT,
     position_name VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- employee_position table
-CREATE TABLE employee_position (
+CREATE TABLE IF NOT EXISTS employee_position (
     employee_id VARCHAR(10) NOT NULL,
     position_id INT NOT NULL,
     effective_date DATE NOT NULL,
@@ -249,13 +288,13 @@ CREATE TABLE employee_position (
 );
 
 -- allowance_type table
-CREATE TABLE allowance_type (
+CREATE TABLE IF NOT EXISTS allowance_type (
     allowance_type_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- position_allowance table
-CREATE TABLE position_allowance (
+CREATE TABLE IF NOT EXISTS position_allowance (
     position_id INT,
     allowance_type_id INT,
     amount DECIMAL(10,2) NOT NULL,
