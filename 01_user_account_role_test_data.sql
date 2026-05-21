@@ -41,4 +41,6 @@ INSERT INTO user_account (employee_id, username, password_hash, role_id, is_acti
     ('E001', 'juan_admin', 'hashed_pwd_001', 1, 1), -- Admin role
     ('E002', 'maria_hr', 'hashed_pwd_002', 2, 1), -- HR Manager role
     ('E003', 'pedro_employee', 'hashed_pwd_003', 4, 1), -- Employee role
-    ('E004', 'ana_payroll', 'hashed_pwd_004', 3, 1); -- Payroll Officer role
+    ('E004', 'ana_payroll', 'hashed_pwd_004', 3, 1), -- Payroll Officer role
+    ('E005', 'miguel_employee', 'hashed_pwd_005', 4, 1); -- Employee role
+
