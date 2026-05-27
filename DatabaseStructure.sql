@@ -5,19 +5,23 @@ USE payrollsystem_db;
 -- employee table
 CREATE TABLE IF NOT EXISTS employee (
 	employee_id VARCHAR(10) PRIMARY KEY,
+
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
+
     birthday DATE NOT NULL,
     address TEXT,
     phone_number VARCHAR(20),
+
     sss_number VARCHAR(20) UNIQUE,
     philhealth_number VARCHAR(20) UNIQUE,
     tin_number VARCHAR(20) UNIQUE,
     pagibig_number VARCHAR(20) UNIQUE,
+
     status ENUM ('REGULAR', 'PROBATIONARY') NOT NULL DEFAULT 'REGULAR',
     supervisor_id VARCHAR(10),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     -- Foreign key relationship
     CONSTRAINT fk_employee_supervisor
     FOREIGN KEY (supervisor_id)
@@ -40,9 +44,11 @@ CREATE TABLE IF NOT EXISTS leave_request (
     leave_type_id INT NOT NULL,
     leave_request_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     employee_id VARCHAR(10) NOT NULL,
+
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     reason TEXT,
+
     status ENUM ('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
     requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     approved_at TIMESTAMP NULL,
@@ -94,14 +100,17 @@ CREATE TABLE IF NOT EXISTS user_account (
     employee_id VARCHAR(10) PRIMARY KEY, -- no employee = no account shared PK
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(128) NOT NULL,
-    role_id INT UNSIGNED NOT NULL DEFAULT 3, -- 3 = employee
+
+    role_id INT UNSIGNED NOT NULL DEFAULT 4, -- 3 = employee
     is_active TINYINT(1) NOT NULL DEFAULT 1,
+
     -- Foreign key relationship
     -- Employee table
     CONSTRAINT fk_user_employee
     FOREIGN KEY (employee_id)
     REFERENCES employee(employee_id)
     ON DELETE CASCADE,
+
     -- Role table
     CONSTRAINT fk_user_role
     FOREIGN KEY (role_id)
@@ -113,16 +122,27 @@ CREATE TABLE IF NOT EXISTS user_account (
 -- Time & Attendance Tracking
 -- attendance table
 CREATE TABLE IF NOT EXISTS attendance (
-    employee_id VARCHAR(10),
-    work_date DATE,
-    hours_worked DECIMAL(5, 2) NOT NULL,
-    PRIMARY KEY (employee_id, work_date), -- Composite PK
+    employee_id VARCHAR(10) NOT NULL,
+    work_date DATE NOT NULL,
+
+    log_in TIME NOT NULL,
+    log_out TIME NULL, -- NULL until employee logs out
+
+    hours_worked DECIMAL(5, 2) NULL, -- computed after logout in backend application code
+    PRIMARY KEY (employee_id, work_date),
+
     -- Foreign key relationship
     CONSTRAINT fk_attendance_employee
     FOREIGN KEY (employee_id)
     REFERENCES employee(employee_id)
     ON DELETE CASCADE,
-    CHECK (hours_worked >= 0)
+    CHECK (log_out >= log_in OR log_out IS NULL),
+    CHECK (hours_worked >= 0 OR hours_worked IS NULL),
+    CHECK (
+        (log_out IS NULL AND hours_worked IS NULL)
+        OR
+        (log_out IS NOT NULL AND hours_worked IS NOT NULL)
+    )
 );
 
 -- overtime_type table
@@ -138,14 +158,17 @@ CREATE TABLE IF NOT EXISTS overtime_entry (
     overtime_type_id INT NOT NULL,
     overtime_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     employee_id VARCHAR(10) NOT NULL,
+
     work_date DATE NOT NULL,
     hours DECIMAL(4, 2) NOT NULL,
+
     -- Foreign key relationship
     -- Employee Table
     CONSTRAINT fk_ot_employee
     FOREIGN KEY (employee_id)
     REFERENCES employee(employee_id)
     ON DELETE CASCADE,
+
     -- OvertimeType Table
     CONSTRAINT fk_ot_type
     FOREIGN KEY (overtime_type_id)
@@ -176,7 +199,7 @@ CREATE TABLE IF NOT EXISTS withholding_tax_bracket (
     max_salary DECIMAL(10,2),
     tax_rate DECIMAL(5,4) NOT NULL,
     effective_date DATE NOT NULL,
-    end_date DATE,
+    end_date DATE NOT NULL,
     CHECK (min_salary >= 0),
     CHECK (tax_rate >= 0)
 );
@@ -186,19 +209,27 @@ CREATE TABLE IF NOT EXISTS payroll (
     payroll_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     employee_id VARCHAR(10) NOT NULL,
     pay_period_start DATE NOT NULL,
-    gross_pay DECIMAL(10,2),
-    total_deductions DECIMAL(10,2),
-    net_pay DECIMAL(10,2),
-    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     pay_period_end DATE NOT NULL,
+
+    gross_pay DECIMAL(10,2) NOT NULL,
+    total_deductions DECIMAL(10,2) NOT NULL,
+    net_pay DECIMAL(10,2) NOT NULL,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
     -- Foreign key relationship
     CONSTRAINT fk_payroll_employee
     FOREIGN KEY (employee_id)
     REFERENCES employee(employee_id)
     ON DELETE CASCADE,
+
     CONSTRAINT uq_employee_period
     UNIQUE (employee_id, pay_period_start, pay_period_end),
-    CHECK (pay_period_end >= pay_period_start)
+
+    CHECK (pay_period_end >= pay_period_start),
+    CHECK (gross_pay >= 0),
+    CHECK (total_deductions >= 0),
+    CHECK (net_pay >= 0),
+    CHECK (net_pay = gross_pay - total_deductions)
 );
 
 -- payroll_earning table
@@ -207,12 +238,14 @@ CREATE TABLE IF NOT EXISTS payroll_earning (
     payroll_id BIGINT UNSIGNED NOT NULL,
     earning_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     amount DECIMAL(10,2) NOT NULL,
+
     -- Foreign key relationship
     -- Payroll Table
     CONSTRAINT fk_pe_payroll
     FOREIGN KEY (payroll_id)
     REFERENCES payroll(payroll_id)
     ON DELETE CASCADE,
+
     -- PayrollEarningType Table
     CONSTRAINT fk_pe_type
     FOREIGN KEY (earning_type_id)
@@ -227,16 +260,19 @@ CREATE TABLE IF NOT EXISTS payroll_deduction (
     payroll_id BIGINT UNSIGNED NOT NULL,
     deduction_id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     amount DECIMAL(10,2) NOT NULL,
+
     -- Foreign key relationship
     -- Payroll Table
     CONSTRAINT fk_pd_payroll
     FOREIGN KEY (payroll_id)
     REFERENCES payroll(payroll_id)
     ON DELETE CASCADE,
+
     -- PayrollDeductionType Table
     CONSTRAINT fk_pd_type
     FOREIGN KEY (deduction_type_id)
     REFERENCES payroll_deduction_type(deduction_type_id),
+    
     -- WithholdingTaxBracket Table
     CONSTRAINT fk_pd_bracket
     FOREIGN KEY (bracket_id)
@@ -245,7 +281,7 @@ CREATE TABLE IF NOT EXISTS payroll_deduction (
 );
 
 -- Salary Calculation
--- depertment table
+-- department table
 CREATE TABLE IF NOT EXISTS department (
     dept_id INT PRIMARY KEY AUTO_INCREMENT,
     dept_name VARCHAR(50) NOT NULL UNIQUE,
@@ -267,24 +303,28 @@ CREATE TABLE IF NOT EXISTS employee_position (
     basic_salary DECIMAL(10,2) NOT NULL,
     end_date DATE,
     PRIMARY KEY (employee_id, position_id, effective_date), -- COmposite PK
+
     -- Foreign key relationship
     -- Employee Table
     CONSTRAINT fk_ep_employee
     FOREIGN KEY (employee_id)
     REFERENCES employee(employee_id)
     ON DELETE CASCADE,
+
     -- Position Table
     CONSTRAINT fk_ep_position
     FOREIGN KEY (position_id)
     REFERENCES `position`(position_id)
     ON DELETE RESTRICT,
+
     -- Department Table
     CONSTRAINT fk_ep_department
     FOREIGN KEY (dept_id)
     REFERENCES department(dept_id)
     ON DELETE RESTRICT
     ON UPDATE CASCADE,
-    CHECK (basic_salary >= 0)
+    CHECK (basic_salary >= 0),
+    CHECK (end_date IS NULL OR end_date >= effective_date)
 );
 
 -- allowance_type table
@@ -295,16 +335,18 @@ CREATE TABLE IF NOT EXISTS allowance_type (
 
 -- position_allowance table
 CREATE TABLE IF NOT EXISTS position_allowance (
-    position_id INT,
-    allowance_type_id INT,
+    position_id INT NOT NULL,
+    allowance_type_id INT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     PRIMARY KEY (position_id, allowance_type_id), -- Composite PK
+
     -- Foreign key relationship
     -- Position table
     CONSTRAINT fk_pa_position
     FOREIGN KEY (position_id)
     REFERENCES `position`(position_id)
     ON DELETE CASCADE,
+    
     -- Allowance_type Table
     CONSTRAINT fk_pa_type
     FOREIGN KEY (allowance_type_id)
