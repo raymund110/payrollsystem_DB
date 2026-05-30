@@ -4,12 +4,12 @@ USE payrollsystem_db;
 
 -- Overtime Type Seed Data
 
-INSERT INTO overtime_type (overtime_type_id, description, rate_multiplier)
+INSERT INTO overtime_type (description, rate_multiplier)
 VALUES
-  (1, 'Regular Day Overtime',        1.25),
-  (2, 'Rest Day Overtime',           1.30),
-  (3, 'Special Holiday Overtime',    1.30),
-  (4, 'Regular Holiday Overtime',    2.60);
+  ('Regular Day Overtime', 1.25),
+  ('Rest Day Overtime', 1.30),
+  ('Special Holiday Overtime', 1.30),
+  ('Regular Holiday Overtime', 2.60);
 
 
 -- Sample Overtime Entries

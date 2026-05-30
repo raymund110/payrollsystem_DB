@@ -1,3 +1,6 @@
+
+USE payrollsystem_db;
+
 -- insert roles
 INSERT INTO role (role_name) VALUES
     ('ADMIN'),
