@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS user_account (
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(128) NOT NULL,
 
-    role_id INT UNSIGNED NOT NULL DEFAULT 4, -- 3 = employee
+    role_id INT UNSIGNED NOT NULL DEFAULT 4, -- 4 = employee
     is_active TINYINT(1) NOT NULL DEFAULT 1,
 
     -- Foreign key relationship
