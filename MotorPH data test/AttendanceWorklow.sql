@@ -16,7 +16,8 @@ SET log_out = '19:24:00', hours_worked = 9.93
 WHERE employee_id = '10010' AND work_date = '2025-06-14';
 
 -- INVALID LOGOUT | CHECK VIOLATION
--- Logout cannot have a NULL log_out or hours_worked
+-- Logout session cannot have a NULL log_out or hours_worked
+-- Prevent incomplete attendance records
 UPDATE attendance
 SET log_out = '19:24:00'
 WHERE employee_id = '10010' AND work_date = '2025-06-14';

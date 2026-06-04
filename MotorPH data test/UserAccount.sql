@@ -4,6 +4,10 @@ User Account one-to-one
 ===================================
 */
 
+-- Non existing employee
+INSERT INTO user_account (employee_id, username, password_hash, role_id, is_active)
+VALUES ('99999', 'gorge_clean10023', 'hashedpassword123', 4, 1); -- Employee Role
+
 -- Only one employee can hava one user account
 -- that is implemented using shared PK employee_id
 INSERT INTO user_account (employee_id, username, password_hash, role_id, is_active)
