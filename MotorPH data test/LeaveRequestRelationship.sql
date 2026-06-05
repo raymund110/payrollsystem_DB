@@ -17,6 +17,10 @@ JOIN employee e
 JOIN leave_type lt
     ON lr.leave_type_id = lt.leave_type_id;
 
+-- Invalid dates
+-- Violates CHECK constraints
+INSERT INTO leave_request(leave_type_id, employee_id, start_date, end_date, reason)
+VALUES (1, '10011', '2026-07-10', '2026-07-09', 'Personal vacation'); -- Vacation Leave
 
 SELECT * FROM leave_type;
 SELECT * FROM leave_request;
