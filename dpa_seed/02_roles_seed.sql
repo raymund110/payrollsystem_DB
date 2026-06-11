@@ -1,6 +1,6 @@
 -- =========================================
 -- Module: Roles Seed
--- File: 06_roles_seed.sql
+-- File: 02_roles_seed.sql
 -- =========================================
 
 USE payrollsystem_db;

@@ -17,30 +17,40 @@ try:
     # 1. EMPLOYEES
     cursor.execute("""
         INSERT INTO employee (
-            employee_no,
-            last_name,
-            first_name,
-            birthday,
-            address,
-            phone_number,
-            sss_number,
-            philhealth_number,
-            tin_number,
-            pagibig_number
-        )
-        SELECT
-            employee_no,
-            last_name,
-            first_name,
-            birthday,
-            address,
-            phone,
-            sss,
-            philhealth,
-            tin,
-            pagibig
-        FROM employee_staging
-        WHERE employee_no IS NOT NULL;
+    employee_no,
+    last_name,
+    first_name,
+    birthday,
+    address,
+    phone_number,
+    sss_number,
+    philhealth_number,
+    tin_number,
+    pagibig_number
+)
+SELECT
+    employee_no,
+    last_name,
+    first_name,
+    birthday,
+    address,
+    phone,
+    sss,
+    philhealth,
+    tin,
+    pagibig
+FROM employee_staging
+WHERE employee_no IS NOT NULL
+ON DUPLICATE KEY UPDATE
+    last_name = VALUES(last_name),
+    first_name = VALUES(first_name),
+    birthday = VALUES(birthday),
+    address = VALUES(address),
+    phone_number = VALUES(phone_number),
+    sss_number = VALUES(sss_number),
+    philhealth_number = VALUES(philhealth_number),
+    tin_number = VALUES(tin_number),
+    pagibig_number = VALUES(pagibig_number);
     """)
     conn.commit()
 
@@ -65,50 +75,50 @@ try:
 
     # 4. EMPLOYMENT HISTORY
     cursor.execute("""
-        INSERT INTO employee_employment_history (
-            employee_pk,
-            status_name,
-            effective_date
-        )
-        SELECT
-            e.employee_pk,
-            s.employment_status,
-            CURDATE()
-        FROM employee_staging s
-        JOIN employee e ON e.employee_no = s.employee_no;
+     INSERT INTO employee_employment_history (
+    employee_pk,
+    status_name,
+    effective_date
+)
+SELECT
+    e.employee_pk,
+    s.employment_status,
+    CURDATE()
+FROM employee_staging s
+JOIN employee e ON e.employee_no = s.employee_no;
     """)
     conn.commit()
 
     # 5. POSITION ASSIGNMENT
     cursor.execute("""
-        INSERT INTO employee_position (
-            employee_pk,
-            position_id,
-            department_id,
-            effective_date,
-            basic_salary
-        )
-        SELECT
-            e.employee_pk,
-            jp.position_id,
-            d.department_id,
-            CURDATE(),
-            s.basic_salary
-        FROM employee_staging s
-        JOIN employee e ON e.employee_no = s.employee_no
-        JOIN job_position jp ON jp.position_name = s.job_position
-        JOIN department d ON d.department_name = 'General';
+       INSERT INTO employee_position (
+    employee_pk,
+    position_id,
+    department_id,
+    effective_date,
+    basic_salary
+)
+SELECT
+    e.employee_pk,
+    jp.position_id,
+    d.department_id,
+    CURDATE(),
+    s.basic_salary
+FROM employee_staging s
+JOIN employee e ON e.employee_no = s.employee_no
+JOIN job_position jp ON jp.position_name = s.job_position
+JOIN department d ON d.department_name = 'General';
     """)
     conn.commit()
 
     # 6. SUPERVISORS
     cursor.execute("""
-        UPDATE employee e
-        JOIN employee_staging s
-            ON e.employee_no = s.employee_no
-        JOIN employee sup
-            ON CONCAT(sup.last_name, ', ', sup.first_name) = s.supervisor_name
-        SET e.supervisor_employee_pk = sup.employee_pk;
+      UPDATE employee e
+JOIN employee_staging s
+    ON e.employee_no = s.employee_no
+JOIN employee sup
+    ON CONCAT(sup.last_name, ', ', sup.first_name) = s.supervisor_name
+SET e.supervisor_employee_pk = sup.employee_pk;
     """)
     conn.commit()
 
