@@ -218,10 +218,7 @@ Capture a screenshot showing the execution of the payslip view creation script:
 source dpa_reports/01_employee_payslip_view.sql;
 ```
 
-**Suggested Filename:**
-`02_view_creation.png`
-
----
+## ![Payslip View](https://drive.google.com/uc?export=view&id=10_NTll-BAmaUfJIElJPche4ufK-1zY3a)
 
 ### Database Testing
 
@@ -241,9 +238,6 @@ WHERE Table_type = 'VIEW';
 ```text
 vw_employee_payslip
 ```
-
-**Screenshot Filename: (to be included)**
-`03_view_validation.png`
 
 #### Sample Payslip Testing
 
@@ -271,8 +265,11 @@ The output confirmed successful generation of:
 - Deduction calculations
 - Net pay computation
 
-**Screenshot Filename: (to be included)**
-`04_employee_payslip_output.png`
+---
+
+![Payslip Report Testing - Head](https://drive.google.com/uc?export=view&id=1knOQM3oHzhBkdhjRek31QRLF2s9LyVgC)
+
+![Payslip Report Testing - Head](https://drive.google.com/uc?export=view&id=18myA49k-P6kcAbVW_Aa0nwUnjuJTGkEG)
 
 ---
 
@@ -308,8 +305,13 @@ source dpa_reports/03_employee_payslip_validation.sql;
 - Validate statutory deductions
 - Validate take-home pay calculations
 
-**Screenshot Filename:**
-`06_validation_script.png`
+---
+
+![Payslip Report Validation - Head](https://drive.google.com/uc?export=view&id=1HTclewDiNiPgRctEUrTF2MnSXmbKX012)
+
+![Payslip Report Validation - Middle](https://drive.google.com/uc?export=view&id=1aS7nG0vrutLQqxu1RO_9Rvg5BXxtZXYu)
+
+![Payslip Report Validation - Tail](https://drive.google.com/uc?export=view&id=1Jy4EaUqNamSeiYyFXsRyCAl-5BXmmjaz)
 
 ---
 
