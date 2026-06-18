@@ -63,9 +63,6 @@ The setup includes:
 | MySQL Shell (mysqlsh)         | SQL Script Execution    |
 | MySQL Workbench or DBeaver CE | Database Administration |
 | Python 3.11+                  | ETL Processing          |
-| Pandas                        | Data Transformation     |
-| SQLAlchemy                    | Database Connectivity   |
-| mysql-connector-python        | MySQL Driver            |
 | Git                           | Source Control          |
 | Aiven MySQL (Optional)        | Cloud Deployment        |
 
