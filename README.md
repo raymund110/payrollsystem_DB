@@ -35,10 +35,9 @@ The report follows MotorPH’s **bi-monthly payroll processing schedule**.
 
 ### Database Environment Setup
 
-
 #### DB Connection with mysqlsh
-![DB connection with mysqlsh](https://drive.google.com/uc?export=view&id=1F1xeaIE7xyWtqQgP9Sy4zCjTktLCmnY_)
 
+![DB connection with mysqlsh](https://drive.google.com/uc?export=view&id=1F1xeaIE7xyWtqQgP9Sy4zCjTktLCmnY_)
 
 #### Database Implementation Process
 
@@ -56,6 +55,16 @@ source dpa_schema/06_attendance_tables.sql;
 source dpa_schema/07_payroll_tables.sql;
 source dpa_schema/08_indexes.sql;
 ```
+
+##### DROP DB & Schema Creation (Head)
+
+![Schema Creation - Head](https://drive.google.com/uc?export=view&id=1e9u2Ad6R4gKcyPtKAA1lEpHJuw52X8VM)
+
+---
+
+##### Schema Creation (Tail)
+
+![Schema Creation - Tail](https://drive.google.com/uc?export=view&id=1V1-q1vJ2AMJucYo7MPOOLRRpkElo5AZL)
 
 ##### Seed Data Initialization
 
