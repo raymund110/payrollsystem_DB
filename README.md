@@ -35,6 +35,11 @@ The report follows MotorPH’s **bi-monthly payroll processing schedule**.
 
 ### Database Environment Setup
 
+
+#### DB Connection with mysqlsh
+![DB connection with mysqlsh](https://drive.google.com/uc?export=view&id=1F1xeaIE7xyWtqQgP9Sy4zCjTktLCmnY_)
+
+
 #### Database Implementation Process
 
 The MotorPH payroll database was initialized through a series of structured SQL scripts executed using MySQL Shell.
