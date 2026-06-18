@@ -100,18 +100,19 @@ python python/load_attendance_staging.py
 python python/transform_attendance.py
 ```
 
+###### ETL Processing
+
+![ETL Processing](https://drive.google.com/uc?export=view&id=1ExFmTT03BN7dNgB7Zf13Vm6KeTSxZSsa)
+
 ##### User Account Initialization
 
 ```sql
 source dpa_seed/05_user_accounts_seed.sql;
 ```
 
-**Screenshot Requirement (to be included)**
+###### User Account
 
-Capture a screenshot showing the successful execution of all database initialization scripts using MySQL Shell.
-
-**Suggested Filename:**
-`01_database_setup.png`
+![User Account Init](https://drive.google.com/uc?export=view&id=1U_PzgHQfJvJO36LVXFLb2o4WEIPEVsb6)
 
 ---
 
