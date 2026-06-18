@@ -76,12 +76,20 @@ source dpa_seed/03_permissions_seed.sql;
 source dpa_seed/04_role_permission_seed.sql;
 ```
 
+##### Data Seeding
+
+![Data Seeding](https://drive.google.com/uc?export=view&id=1xI76O9y17FWONL1NLnCAd0F5M5DWw_87)
+
 ##### ETL Staging Setup
 
 ```sql
 source dpa_etl/00_employee_staging.sql;
 source dpa_etl/01_attendance_staging.sql;
 ```
+
+###### ETL Staging
+
+![ETL Staging](https://drive.google.com/uc?export=view&id=1V1ohN0ihup0WnlgrIWCODFbP66aKNHhs)
 
 ##### Python ETL Processing
 
