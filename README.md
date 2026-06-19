@@ -118,6 +118,22 @@ source dpa_seed/05_user_accounts_seed.sql;
 
 ### Employee Payslip Report Design
 
+After running all the SQL and Python scripts in sequence, the DB can generate the view for payslip reporting by running the following SQL scripts for reporing also in sequence. It provides the actual payslip report, testing and validation.
+
+```sql
+--- # Run in sequence
+
+--- # actuall report generation
+source dpa_reports/01_employee_payslip_view.sql;
+
+--- # test methods
+source dpa_reports/02_employee_payslip_test.sql;
+
+--- # validation of result
+source dpa_reports/03_employee_payslip_validation.sql;
+
+```
+
 #### Payslip Data Requirements
 
 The report design was based on the standard MotorPH employee payslip format. The following data elements were identified as necessary components of the report.
@@ -210,15 +226,13 @@ Gross Income
 − Total Deductions
 ```
 
-**Screenshot Requirement (to be included)**
-
-Capture a screenshot showing the execution of the payslip view creation script:
-
 ```sql
 source dpa_reports/01_employee_payslip_view.sql;
 ```
 
-## ![Payslip View](https://drive.google.com/uc?export=view&id=10_NTll-BAmaUfJIElJPche4ufK-1zY3a)
+###### Payslip View Creation
+
+![Payslip View](https://drive.google.com/uc?export=view&id=10_NTll-BAmaUfJIElJPche4ufK-1zY3a)
 
 ### Database Testing
 
@@ -249,9 +263,8 @@ The report was tested using the following employee record:
 Test query:
 
 ```sql
-SELECT *
-FROM vw_employee_payslip
-WHERE employee_id = '10015';
+--- # Run this SQL script to test
+SELECT * FROM vw_employee_payslip WHERE employee_id = '10015';
 ```
 
 #### Validation Results
@@ -265,9 +278,11 @@ The output confirmed successful generation of:
 - Deduction calculations
 - Net pay computation
 
----
+###### Payroll Report Testing (Head)
 
 ![Payslip Report Testing - Head](https://drive.google.com/uc?export=view&id=1knOQM3oHzhBkdhjRek31QRLF2s9LyVgC)
+
+###### Payroll Report Testing (Tail)
 
 ![Payslip Report Testing - Head](https://drive.google.com/uc?export=view&id=18myA49k-P6kcAbVW_Aa0nwUnjuJTGkEG)
 
@@ -289,9 +304,6 @@ source dpa_reports/02_employee_payslip_test.sql;
 - Display sample report output
 - Test employee payslip generation
 
-**Screenshot Filename: (to be included)**
-`05_testing_script.png`
-
 #### Validation Script
 
 ```sql
@@ -305,11 +317,15 @@ source dpa_reports/03_employee_payslip_validation.sql;
 - Validate statutory deductions
 - Validate take-home pay calculations
 
----
+###### Payroll Report Validation (Head)
 
 ![Payslip Report Validation - Head](https://drive.google.com/uc?export=view&id=1HTclewDiNiPgRctEUrTF2MnSXmbKX012)
 
+###### Payroll Report Validation (Middle)
+
 ![Payslip Report Validation - Middle](https://drive.google.com/uc?export=view&id=1aS7nG0vrutLQqxu1RO_9Rvg5BXxtZXYu)
+
+###### Payroll Report Validation (Tail)
 
 ![Payslip Report Validation - Tail](https://drive.google.com/uc?export=view&id=1Jy4EaUqNamSeiYyFXsRyCAl-5BXmmjaz)
 
