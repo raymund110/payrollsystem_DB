@@ -275,7 +275,7 @@ SSS + PhilHealth + Pag-IBIG + Withholding Tax
 
 ---
 
-## Employee Payslip View Implementation (UPDATED)
+## Employee Payslip View Implementation
 
 The final view:
 
