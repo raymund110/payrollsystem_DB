@@ -33,13 +33,13 @@ git branch -a
 Locate:
 
 ```text
-remotes/origin/arnel/ms2-homework1
+remotes/origin/arne/ms2-homework1
 ```
 
 Switch branch:
 
 ```bash
-git checkout arnel/ms2-homework1
+git checkout arne/ms2-homework1
 ```
 
 Verify:
@@ -64,13 +64,13 @@ Before running the project:
 
 ```bash
 git fetch origin
-git pull origin arnel/ms2-homework1
+git pull origin arne/ms2-homework1
 ```
 
 Recommended:
 
 ```bash
-git fetch origin && git pull origin arnel/ms2-homework1
+git fetch origin && git pull origin arne/ms2-homework1
 ```
 
 ---
@@ -289,6 +289,7 @@ Execute:
 
 ```sql
 source dpa_seed/05_user_accounts_seed.sql;
+source dpa_seed/06_withholding_tax_seed.sql;
 ```
 
 ---
@@ -306,8 +307,7 @@ source dpa_reports/01_employee_payslip_view.sql;
 Validate:
 
 ```sql
-SHOW FULL TABLES
-WHERE Table_type='VIEW';
+SHOW FULL TABLES WHERE Table_type='VIEW';
 ```
 
 Expected:

@@ -122,12 +122,12 @@ source dpa_seed/06_withholding_tax_seed.sql;
 After running all the SQL and Python scripts in sequence, the DB can generate the view for payslip reporting by running the following SQL scripts for reporing also in sequence. It provides the actual payslip report, testing and validation.
 
 ```sql
---- # Run in sequence
+-- # Run in sequence
 
---- # actuall report generation
+-- # actuall report generation
 source dpa_reports/01_employee_payslip_view.sql;
 
---- # test methods
+-- # test methods
 source dpa_reports/02_employee_payslip_test.sql;
 
 --- # validation of result
@@ -366,7 +366,7 @@ The report was tested using the following employee record:
 Test query:
 
 ```sql
---- # Run this SQL script to test
+-- # Run this SQL script to test
 SELECT * FROM vw_employee_payslip WHERE employee_id='10015';
 ```
 
