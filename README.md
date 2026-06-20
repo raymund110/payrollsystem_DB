@@ -108,6 +108,7 @@ python python/transform_attendance.py
 
 ```sql
 source dpa_seed/05_user_accounts_seed.sql;
+source dpa_seed/06_withholding_tax_seed.sql;
 ```
 
 ###### User Account
@@ -175,31 +176,39 @@ The Employee Payslip Report was implemented through a database view named:
 vw_employee_payslip
 ```
 
-#### Business Rules Implemented
+---
 
-##### Payroll Cutoff Period
+### Business Rules Implemented
+
+#### Payroll Cutoff Period
 
 The report follows MotorPH’s bi-monthly payroll schedule.
 
-For the second payroll cutoff period, attendance records are filtered within:
+For the second payroll cutoff period:
 
 **December 16, 2024 to December 31, 2024**
 
 ```sql
-WHERE ar.attendance_date
-BETWEEN '2024-12-16'
-AND '2024-12-31'
+WHERE ar.attendance_date BETWEEN '2024-12-16' AND '2024-12-31'
 ```
 
-##### Gross Income Calculation
+---
 
-Gross income is calculated using the following formula:
+#### Gross Income Calculation
 
 ```text
 Daily Rate × Days Worked
 ```
 
-##### Benefits Calculation
+Daily rate is derived from:
+
+```text
+Monthly Rate ÷ 20 working days
+```
+
+---
+
+#### Benefits Calculation
 
 The following employee benefits are included:
 
@@ -207,24 +216,119 @@ The following employee benefits are included:
 - Phone Allowance
 - Clothing Allowance
 
-##### Mandatory Deductions
+---
+
+#### Mandatory Deductions
 
 The following statutory deductions are applied:
 
 - Social Security System (SSS)
 - PhilHealth
 - Pag-IBIG Fund
-- Withholding Tax
+- Withholding Tax (computed via tax brackets)
 
-##### Net Pay Calculation
+---
 
-Take-home pay is computed as:
+#### Withholding Tax Computation
+
+The withholding tax is calculated using a **progressive tax bracket system** based on the `withholding_tax_bracket` table.
+
+Key logic:
+
+- Taxable income is computed as:
+
+```text
+Gross Income + Benefits − Statutory Contributions
+```
+
+- The appropriate tax bracket is selected based on:
+
+```sql
+t.taxable_income BETWEEN (wtb.min_salary / 2) AND (wtb.max_salary / 2)
+```
+
+- Tax formula:
+
+```text
+(base_tax / 2)
++ ((taxable_income − (min_salary / 2)) × excess_rate)
+```
+
+This ensures alignment with **semi-monthly payroll computation logic**.
+
+---
+
+#### Net Pay Calculation
 
 ```text
 Gross Income
 + Total Benefits
 − Total Deductions
 ```
+
+Where:
+
+```text
+Total Deductions =
+SSS + PhilHealth + Pag-IBIG + Withholding Tax
+```
+
+---
+
+## Employee Payslip View Implementation (UPDATED)
+
+The final view:
+
+```sql
+vw_employee_payslip
+```
+
+### Key Improvements
+
+- Employee ID standardized as:
+
+```sql
+e.employee_no AS employee_id
+```
+
+- Added progressive tax bracket computation via:
+
+```sql
+withholding_tax_bracket
+```
+
+- Semi-monthly payroll logic implemented using division by 2 for tax thresholds
+
+- Clean separation of:
+  - payroll_base
+  - tax_computation
+  - final_payroll
+
+---
+
+### Tax Bracket Integration
+
+The system uses a structured tax bracket table:
+
+```sql
+withholding_tax_bracket
+```
+
+### Key Characteristics:
+
+- Progressive tax rates
+- Semi-monthly adjusted thresholds
+- Base tax + excess rate computation
+- Effective dating support
+
+### Example Bracket Structure:
+
+| Income Range   | Base Tax | Excess Rate |
+| -------------- | -------- | ----------- |
+| 0–20,832       | 0        | 0%          |
+| 20,833–33,332  | 0        | 20%         |
+| 33,333–66,666  | 2,500    | 25%         |
+| 66,667–166,666 | 10,833   | 30%         |
 
 ```sql
 source dpa_reports/01_employee_payslip_view.sql;
@@ -243,8 +347,7 @@ Comprehensive testing was performed to verify the correctness and accuracy of th
 The following query was executed to confirm successful creation of the payslip view:
 
 ```sql
-SHOW FULL TABLES
-WHERE Table_type = 'VIEW';
+SHOW FULL TABLES WHERE Table_type = 'VIEW';
 ```
 
 **Expected Result:**
@@ -264,7 +367,7 @@ Test query:
 
 ```sql
 --- # Run this SQL script to test
-SELECT * FROM vw_employee_payslip WHERE employee_id = '10015';
+SELECT * FROM vw_employee_payslip WHERE employee_id='10015';
 ```
 
 #### Validation Results
@@ -328,6 +431,10 @@ source dpa_reports/03_employee_payslip_validation.sql;
 ###### Payroll Report Validation (Tail)
 
 ![Payslip Report Validation - Tail](https://drive.google.com/uc?export=view&id=1Jy4EaUqNamSeiYyFXsRyCAl-5BXmmjaz)
+
+###### Revised Payroll Report View
+
+![Payroll Report with Withholding Tax Computation](https://drive.google.com/uc?export=view&id=1kum6auIWkdQwZ0A8pUEI-0Z0Bwy-vEBc)
 
 ---
 

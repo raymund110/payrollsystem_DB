@@ -8,62 +8,107 @@
 
 USE payrollsystem_db;
 
+
+
 -- =========================================
 -- VALIDATE GROSS INCOME
 -- =========================================
 
 SELECT
+
     employee_id,
+
     employee_name,
+
     monthly_rate,
+
     daily_rate,
+
     days_worked,
+
+    overtime_hours,
+
     gross_income
+
 FROM vw_employee_payslip
+
 ORDER BY employee_id;
+
+
 
 -- =========================================
 -- VALIDATE BENEFITS
 -- =========================================
 
 SELECT
+
     employee_id,
+
     employee_name,
+
     rice_subsidy,
+
     phone_allowance,
+
     clothing_allowance,
+
     total_benefits
+
 FROM vw_employee_payslip
+
 ORDER BY employee_id;
+
+
 
 -- =========================================
 -- VALIDATE DEDUCTIONS
 -- =========================================
 
 SELECT
+
     employee_id,
+
     employee_name,
-    sss_deduction,
-    philhealth_deduction,
-    pagibig_deduction,
+
+    social_security_system,
+
+    philhealth,
+
+    pagibig,
+
     withholding_tax,
+
     total_deductions
+
 FROM vw_employee_payslip
+
 ORDER BY employee_id;
 
+
+
 -- =========================================
--- VALIDATE TAKE HOME PAY
+-- VALIDATE PAYSLIP SUMMARY
 -- =========================================
 
 SELECT
+
     employee_id,
+
     employee_name,
-    gross_income,
-    total_benefits,
-    total_deductions,
+
+    summary_gross_income,
+
+    summary_benefits,
+
+    summary_deductions,
+
     take_home_pay
+
 FROM vw_employee_payslip
+
 ORDER BY employee_id;
+
+
 
 -- =========================================
 -- END OF FILE
