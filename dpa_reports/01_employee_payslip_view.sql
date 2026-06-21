@@ -1,59 +1,68 @@
 -- =========================================
--- Module: Employee Payslip Reporting
+-- Module: Employee Payslip Reporting (FINAL)
 -- File: 01_employee_payslip_view.sql
 -- Description:
--- This view generates a semi-monthly employee payslip report using employee master data, position details, attendance records, and statutory deductions.
--- It computes gross pay, benefits, taxable income, withholding tax, and take-home pay per employee.
+-- Generates a bi-monthly employee payslip using:
+-- - Employee master data
+-- - Position + department tables
+-- - Attendance records
+-- - Employee allowances (staging)
+-- - Table-driven statutory deductions
+-- - Course-based withholding tax brackets
 -- =========================================
 
 USE payrollsystem_db;
 
 DROP VIEW IF EXISTS vw_employee_payslip;
 
-CREATE VIEW vw_employee_payslip AS
+CREATE OR REPLACE VIEW vw_employee_payslip AS
 
-WITH payroll_base AS (
+/* =========================
+   FIXED PAYROLL PERIOD
+   ========================= */
+WITH payroll_period AS (
+    SELECT
+        '2024-06-16' AS period_start,
+        '2024-06-30' AS period_end
+),
 
+/* =========================
+   FILTER ATTENDANCE
+   ========================= */
+attendance_filtered AS (
+    SELECT
+        ar.employee_pk,
+        ar.attendance_date,
+        ar.hours_worked
+    FROM attendance_record ar
+    JOIN payroll_period p
+        ON ar.attendance_date BETWEEN p.period_start AND p.period_end
+),
+
+/* =========================
+   BASE PAYROLL DATA
+   ========================= */
+payroll_base AS (
     SELECT
         e.employee_pk,
         e.employee_no AS employee_id,
-
         CONCAT(e.last_name, ', ', e.first_name) AS employee_name,
 
-        CONCAT(jp.position_name, ' / ', d.department_name)
-            AS employee_position_department,
+        d.department_name,
+        jp.position_name,
 
-        MIN(ar.attendance_date) AS period_start_date,
-        MAX(ar.attendance_date) AS period_end_date,
+        p.period_start,
+        p.period_end,
 
         ep.basic_salary AS monthly_rate,
 
         ROUND(ep.basic_salary / 20, 2) AS daily_rate,
 
-        COUNT(DISTINCT ar.attendance_date) AS days_worked,
-
-        0 AS overtime_hours,
-
-        ROUND(
-            (ep.basic_salary / 20) * COUNT(DISTINCT ar.attendance_date),
-            2
-        ) AS gross_income,
-
-        COALESCE(es.rice_subsidy, 0) AS rice_subsidy,
-        COALESCE(es.phone_allowance, 0) AS phone_allowance,
-        COALESCE(es.clothing_allowance, 0) AS clothing_allowance,
-
-        (
-            COALESCE(es.rice_subsidy, 0)
-            + COALESCE(es.phone_allowance, 0)
-            + COALESCE(es.clothing_allowance, 0)
-        ) AS total_benefits,
-
-        900 AS social_security_system,
-        450 AS philhealth,
-        100 AS pagibig
+        COUNT(DISTINCT a.attendance_date) AS days_worked,
+        COALESCE(SUM(a.hours_worked), 0) AS total_hours_worked
 
     FROM employee e
+    CROSS JOIN payroll_period p
 
     JOIN employee_position ep
         ON e.employee_pk = ep.employee_pk
@@ -64,98 +73,145 @@ WITH payroll_base AS (
     JOIN department d
         ON ep.department_id = d.department_id
 
-    LEFT JOIN attendance_record ar
-        ON e.employee_pk = ar.employee_pk   
-
-    LEFT JOIN employee_staging es
-        ON es.employee_no = e.employee_no
+    LEFT JOIN attendance_filtered a
+        ON e.employee_pk = a.employee_pk
 
     GROUP BY
         e.employee_pk,
         e.employee_no,
-        e.first_name,
         e.last_name,
-        jp.position_name,
+        e.first_name,
         d.department_name,
+        jp.position_name,
         ep.basic_salary,
-        es.rice_subsidy,
-        es.phone_allowance,
-        es.clothing_allowance
+        p.period_start,
+        p.period_end
 ),
 
-tax_computation AS (
-
+/* =========================
+   COMPUTATIONS
+   ========================= */
+calc AS (
     SELECT
-        p.*,
-        (
-            p.gross_income
-            + p.total_benefits
-            - (p.social_security_system + p.philhealth + p.pagibig)
-        ) AS taxable_income
+        b.*,
 
-    FROM payroll_base p
+        /* SAMPLE-ALIGNED GROSS PAY */
+        ROUND(b.daily_rate * b.days_worked, 2) AS gross_income,
+
+        /* BENEFITS (SOURCE OF TRUTH: employee_staging) */
+        COALESCE(es.rice_subsidy, 0) AS rice_subsidy,
+        COALESCE(es.phone_allowance, 0) AS phone_allowance,
+        COALESCE(es.clothing_allowance, 0) AS clothing_allowance,
+
+        (
+            COALESCE(es.rice_subsidy, 0)
+            + COALESCE(es.phone_allowance, 0)
+            + COALESCE(es.clothing_allowance, 0)
+        ) AS total_benefits,
+
+        /* =========================
+           STATUTORY (TABLE-DRIVEN)
+           ========================= */
+
+        COALESCE((
+            SELECT contribution
+            FROM sss_contribution_bracket s
+            WHERE b.daily_rate * b.days_worked
+                  BETWEEN s.min_compensation AND s.max_compensation
+            LIMIT 1
+        ), 0) AS sss,
+
+        COALESCE((
+            SELECT ROUND((b.daily_rate * b.days_worked) * r.premium_rate * r.employee_share, 2)
+            FROM philhealth_contribution_rule r
+            WHERE (b.daily_rate * b.days_worked)
+                  BETWEEN r.min_salary AND r.max_salary
+            LIMIT 1
+        ), 0) AS philhealth,
+
+        COALESCE((
+            SELECT LEAST((b.daily_rate * b.days_worked) * r.employee_rate, r.max_contribution)
+            FROM pagibig_contribution_rule r
+            WHERE (b.daily_rate * b.days_worked)
+                  BETWEEN r.min_salary AND r.max_salary
+            LIMIT 1
+        ), 0) AS pagibig
+
+    FROM payroll_base b
+    LEFT JOIN employee_staging es
+        ON es.employee_no = b.employee_id
 ),
 
-final_payroll AS (
+/* =========================
+   TAXABLE INCOME
+   ========================= */
+tax AS (
+    SELECT
+        c.*,
+        (
+            gross_income
+            + total_benefits
+            - (sss + philhealth + pagibig)
+        ) AS taxable_income
+    FROM calc c
+),
 
+/* =========================
+   WITHHOLDING TAX
+   ========================= */
+final AS (
     SELECT
         t.*,
 
-        ROUND(
-            COALESCE(
-                (wtb.base_tax / 2)
-                +
-                (
-                    (t.taxable_income - (wtb.min_salary / 2))
-                    * wtb.excess_rate
-                ),
-                0
-            ),
-            2
-        ) AS withholding_tax
+        COALESCE((
+            SELECT
+                w.base_tax +
+                ((t.taxable_income - w.min_salary) * w.excess_rate)
+            FROM withholding_tax_bracket w
+            WHERE t.taxable_income >= w.min_salary
+              AND (t.taxable_income <= w.max_salary OR w.max_salary IS NULL)
+            ORDER BY w.min_salary DESC
+            LIMIT 1
+        ), 0) AS withholding_tax
 
-    FROM tax_computation t
-
-    LEFT JOIN withholding_tax_bracket wtb
-        ON t.taxable_income >= (wtb.min_salary / 2)
-        AND (
-            t.taxable_income < (wtb.max_salary / 2)
-            OR wtb.max_salary IS NULL
-        )
+    FROM tax t
 )
 
+/* =========================
+   OUTPUT
+   ========================= */
 SELECT
     employee_id,
     employee_name,
-    employee_position_department,
-    period_start_date,
-    period_end_date,
+    department_name,
+    position_name,
+
+    period_start,
+    period_end,
+
     monthly_rate,
     daily_rate,
+
     days_worked,
-    overtime_hours,
+    total_hours_worked,
+
     gross_income,
+
     rice_subsidy,
     phone_allowance,
     clothing_allowance,
     total_benefits,
-    social_security_system,
+
+    sss,
     philhealth,
     pagibig,
+
+    taxable_income,
     withholding_tax,
 
-    (social_security_system + philhealth + pagibig + withholding_tax)
-        AS total_deductions,
+    (sss + philhealth + pagibig + withholding_tax) AS total_deductions,
 
-    gross_income AS summary_gross_income,
-    total_benefits AS summary_benefits,
+    (gross_income + total_benefits)
+    - (sss + philhealth + pagibig + withholding_tax) AS take_home_pay
 
-    (social_security_system + philhealth + pagibig + withholding_tax)
-        AS summary_deductions,
-
-    (
-        gross_income + total_benefits
-        - (social_security_system + philhealth + pagibig + withholding_tax)
-    ) AS take_home_pay
-
-FROM final_payroll;
+FROM final;

@@ -1,115 +1,13 @@
--- =========================================
--- Module: Employee Payslip Validation
--- File: 03_employee_payslip_validation.sql
--- Description:
--- Validates payroll calculations
--- for reporting accuracy.
--- =========================================
-
-USE payrollsystem_db;
-
-
-
--- =========================================
--- VALIDATE GROSS INCOME
--- =========================================
-
 SELECT
-
     employee_id,
-
     employee_name,
-
-    monthly_rate,
-
-    daily_rate,
-
-    days_worked,
-
-    overtime_hours,
-
-    gross_income
-
-FROM vw_employee_payslip
-
-ORDER BY employee_id;
-
-
-
--- =========================================
--- VALIDATE BENEFITS
--- =========================================
-
-SELECT
-
-    employee_id,
-
-    employee_name,
-
-    rice_subsidy,
-
-    phone_allowance,
-
-    clothing_allowance,
-
-    total_benefits
-
-FROM vw_employee_payslip
-
-ORDER BY employee_id;
-
-
-
--- =========================================
--- VALIDATE DEDUCTIONS
--- =========================================
-
-SELECT
-
-    employee_id,
-
-    employee_name,
-
-    social_security_system,
-
+    gross_income,
+    total_benefits,
+    sss,
     philhealth,
-
     pagibig,
-
     withholding_tax,
-
-    total_deductions
-
-FROM vw_employee_payslip
-
-ORDER BY employee_id;
-
-
-
--- =========================================
--- VALIDATE PAYSLIP SUMMARY
--- =========================================
-
-SELECT
-
-    employee_id,
-
-    employee_name,
-
-    summary_gross_income,
-
-    summary_benefits,
-
-    summary_deductions,
-
+    total_deductions,
     take_home_pay
-
 FROM vw_employee_payslip
-
-ORDER BY employee_id;
-
-
-
--- =========================================
--- END OF FILE
--- =========================================
+WHERE employee_id = '10015';

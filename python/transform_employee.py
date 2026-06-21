@@ -14,47 +14,51 @@ cursor = conn.cursor()
 try:
     print("STARTING EMPLOYEE TRANSFORMATION")
 
+    # =========================================
     # 1. EMPLOYEES
+    # =========================================
     cursor.execute("""
         INSERT INTO employee (
-    employee_no,
-    last_name,
-    first_name,
-    birthday,
-    address,
-    phone_number,
-    sss_number,
-    philhealth_number,
-    tin_number,
-    pagibig_number
-)
-SELECT
-    employee_no,
-    last_name,
-    first_name,
-    birthday,
-    address,
-    phone,
-    sss,
-    philhealth,
-    tin,
-    pagibig
-FROM employee_staging
-WHERE employee_no IS NOT NULL
-ON DUPLICATE KEY UPDATE
-    last_name = VALUES(last_name),
-    first_name = VALUES(first_name),
-    birthday = VALUES(birthday),
-    address = VALUES(address),
-    phone_number = VALUES(phone_number),
-    sss_number = VALUES(sss_number),
-    philhealth_number = VALUES(philhealth_number),
-    tin_number = VALUES(tin_number),
-    pagibig_number = VALUES(pagibig_number);
+            employee_no,
+            last_name,
+            first_name,
+            birthday,
+            address,
+            phone_number,
+            sss_number,
+            philhealth_number,
+            tin_number,
+            pagibig_number
+        )
+        SELECT
+            employee_no,
+            last_name,
+            first_name,
+            birthday,
+            address,
+            phone,
+            sss,
+            philhealth,
+            tin,
+            pagibig
+        FROM employee_staging
+        WHERE employee_no IS NOT NULL
+        ON DUPLICATE KEY UPDATE
+            last_name = VALUES(last_name),
+            first_name = VALUES(first_name),
+            birthday = VALUES(birthday),
+            address = VALUES(address),
+            phone_number = VALUES(phone_number),
+            sss_number = VALUES(sss_number),
+            philhealth_number = VALUES(philhealth_number),
+            tin_number = VALUES(tin_number),
+            pagibig_number = VALUES(pagibig_number);
     """)
     conn.commit()
 
+    # =========================================
     # 2. JOB POSITIONS
+    # =========================================
     cursor.execute("""
         INSERT IGNORE INTO job_position (position_name)
         SELECT DISTINCT job_position
@@ -63,62 +67,90 @@ ON DUPLICATE KEY UPDATE
     """)
     conn.commit()
 
-    # 3. DEPARTMENT
+    # =========================================
+    # 3. DEPARTMENT SEED (SAFE UPSERT)
+    # =========================================
     cursor.execute("""
         INSERT INTO department (department_name, description)
-        SELECT 'General', 'Default department'
-        WHERE NOT EXISTS (
-            SELECT 1 FROM department WHERE department_name = 'General'
-        );
+        VALUES
+        ('IT', 'IT Department'),
+        ('HR', 'HR Department'),
+        ('Finance', 'Finance Department'),
+        ('Accounting', 'Accounting Department'),
+        ('Sales', 'Marketing Department'),
+        ('Operations', 'Operations and Customer Service Department'),
+        ('Leadership', 'Executive Management'),
+        ('General', 'Default fallback department for unmapped roles')
+        ON DUPLICATE KEY UPDATE
+            description = VALUES(description);
     """)
     conn.commit()
 
+    # =========================================
     # 4. EMPLOYMENT HISTORY
+    # =========================================
     cursor.execute("""
-     INSERT INTO employee_employment_history (
-    employee_pk,
-    status_name,
-    effective_date
-)
-SELECT
-    e.employee_pk,
-    s.employment_status,
-    CURDATE()
-FROM employee_staging s
-JOIN employee e ON e.employee_no = s.employee_no;
+        INSERT INTO employee_employment_history (
+            employee_pk,
+            status_name,
+            effective_date
+        )
+        SELECT
+            e.employee_pk,
+            s.employment_status,
+            CURDATE()
+        FROM employee_staging s
+        JOIN employee e ON e.employee_no = s.employee_no;
     """)
     conn.commit()
 
-    # 5. POSITION ASSIGNMENT
+    # =========================================
+    # 5. POSITION + DEPARTMENT ASSIGNMENT (FIXED)
+    # =========================================
     cursor.execute("""
-       INSERT INTO employee_position (
-    employee_pk,
-    position_id,
-    department_id,
-    effective_date,
-    basic_salary
-)
-SELECT
-    e.employee_pk,
-    jp.position_id,
-    d.department_id,
-    CURDATE(),
-    s.basic_salary
-FROM employee_staging s
-JOIN employee e ON e.employee_no = s.employee_no
-JOIN job_position jp ON jp.position_name = s.job_position
-JOIN department d ON d.department_name = 'General';
+        INSERT INTO employee_position (
+            employee_pk,
+            position_id,
+            department_id,
+            effective_date,
+            basic_salary
+        )
+        SELECT
+            e.employee_pk,
+            jp.position_id,
+            d.department_id,
+            CURDATE(),
+            s.basic_salary
+        FROM employee_staging s
+        JOIN employee e ON e.employee_no = s.employee_no
+        JOIN job_position jp ON jp.position_name = s.job_position
+
+        LEFT JOIN department d
+            ON d.department_name = CASE
+                WHEN s.job_position LIKE 'IT%' THEN 'IT'
+                WHEN s.job_position LIKE 'HR%' THEN 'HR'
+                WHEN s.job_position LIKE 'Payroll%' THEN 'Finance'
+                WHEN s.job_position LIKE 'Finance%' THEN 'Finance'
+                WHEN s.job_position LIKE 'Accounting%' THEN 'Accounting'
+                WHEN s.job_position LIKE 'Chief%' THEN 'Leadership'
+                WHEN s.job_position LIKE 'Customer%' THEN 'Operations'
+                WHEN s.job_position LIKE 'Sales%' THEN 'Sales'
+                WHEN s.job_position LIKE 'Supply%' THEN 'Operations'
+                ELSE 'General'
+            END;
     """)
     conn.commit()
 
-    # 6. SUPERVISORS
+    # =========================================
+    # 6. SUPERVISOR MAPPING
+    # =========================================
     cursor.execute("""
-      UPDATE employee e
-JOIN employee_staging s
-    ON e.employee_no = s.employee_no
-JOIN employee sup
-    ON CONCAT(sup.last_name, ', ', sup.first_name) = s.supervisor_name
-SET e.supervisor_employee_pk = sup.employee_pk;
+        UPDATE employee e
+        JOIN employee_staging s
+            ON e.employee_no = s.employee_no
+        JOIN employee sup
+            ON CONCAT(sup.last_name, ', ', sup.first_name) = s.supervisor_name
+        SET e.supervisor_employee_pk = sup.employee_pk;
     """)
     conn.commit()
 

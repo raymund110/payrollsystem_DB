@@ -8,7 +8,15 @@
 USE payrollsystem_db;
 
 INSERT INTO department (department_name, description)
-SELECT 'General', 'Default department for ETL employee assignment'
-WHERE NOT EXISTS (
-    SELECT 1 FROM department WHERE department_name = 'General'
-);
+VALUES
+('IT', 'IT Department'),
+('HR', 'HR Department'),
+('Finance', 'Finance Department'),
+('Accounting', 'Accounting Department'),
+('Sales', 'Marketing Department'),
+('Operations', 'Operations and Customer Service Department'),
+('Leadership', 'Executive Management'),
+('General', 'Default fallback department for unmapped roles')
+
+ON DUPLICATE KEY UPDATE
+description = VALUES(description);
