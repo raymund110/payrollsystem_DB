@@ -439,6 +439,22 @@ source dpa_reports/03_employee_payslip_validation.sql;
 
 ---
 
+### Payroll Summary Report View
+
+```sql
+-- # Run in sequence
+
+-- # reusable payroll base view
+source dpa_reports/04_payroll_core_view.sql;
+
+-- # final payroll summary report
+source dpa_reports/05_payroll_summary_procedure.sql;
+
+--- # validation/testing
+source dpa_reports/06_payroll_summary_test.sql;
+
+```
+
 ### Challenges Encountered
 
 Several challenges were encountered during implementation:
