@@ -12,33 +12,17 @@
 
 USE payrollsystem_db;
 
--- =========================================
--- 1. MONTHLY - ALL EMPLOYEES
--- =========================================
-CALL sp_payroll_summary('MONTHLY', '2024-12-01', NULL);
+SHOW FULL TABLES
+WHERE Table_type = 'VIEW';
 
--- =========================================
--- 2. SEMI-MONTHLY FIRST HALF
--- =========================================
-CALL sp_payroll_summary('SEMI_MONTHLY', '2024-12-10', NULL);
+SELECT *
+FROM vw_payroll_summary;
 
--- =========================================
--- 3. SEMI-MONTHLY SECOND HALF
--- =========================================
-CALL sp_payroll_summary('SEMI_MONTHLY', '2024-12-20', NULL);
-
--- =========================================
--- 4. SINGLE EMPLOYEE CHECK
--- =========================================
-CALL sp_payroll_summary('MONTHLY', '2024-12-01', '10015');
-
--- =========================================
--- 5. MONTHLY - SELECTED EMPLOYEES (ORDERED OUTPUT FIX)
---    NOTE: procedure supports only single filter,
---    so we simulate batch calls
--- =========================================
-CALL sp_payroll_summary(
-    'MONTHLY',
-    '2024-12-01',
-    '10015,10005,10022,10034,10003'
-);
+SELECT
+    ROUND(SUM(gross_income), 2) AS total_gross_income,
+    ROUND(SUM(sss_contribution), 2) AS total_sss,
+    ROUND(SUM(philhealth_contribution), 2) AS total_philhealth,
+    ROUND(SUM(pagibig_contribution), 2) AS total_pagibig,
+    ROUND(SUM(withholding_tax), 2) AS total_withholding_tax,
+    ROUND(SUM(net_pay), 2) AS total_net_pay
+FROM vw_payroll_summary;

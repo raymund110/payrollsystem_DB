@@ -21,7 +21,7 @@ SET @@SESSION.SQL_LOG_BIN= 0;
 -- GTID state at the beginning of the backup 
 --
 
-SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '5b70a220-6c99-11f1-b8c0-59a639271a0e:1-75';
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '5b70a220-6c99-11f1-b8c0-59a639271a0e:1-569';
 
 --
 -- Table structure for table `allowance_type`
@@ -63,7 +63,7 @@ CREATE TABLE `attendance_record` (
   CONSTRAINT `chk_hours_worked` CHECK ((`hours_worked` >= 0)),
   CONSTRAINT `chk_late_minutes` CHECK ((`late_minutes` >= 0)),
   CONSTRAINT `chk_undertime_minutes` CHECK ((`undertime_minutes` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=5169 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8192 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -99,7 +99,7 @@ CREATE TABLE `department` (
   `description` text,
   PRIMARY KEY (`department_id`),
   UNIQUE KEY `department_name` (`department_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -135,7 +135,7 @@ CREATE TABLE `employee` (
   KEY `idx_employee_supervisor` (`supervisor_employee_pk`),
   KEY `idx_employee_no` (`employee_no`),
   CONSTRAINT `fk_employee_supervisor` FOREIGN KEY (`supervisor_employee_pk`) REFERENCES `employee` (`employee_pk`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +155,7 @@ CREATE TABLE `employee_employment_history` (
   PRIMARY KEY (`history_id`),
   KEY `idx_employment_history_employee` (`employee_pk`),
   CONSTRAINT `fk_eh_employee` FOREIGN KEY (`employee_pk`) REFERENCES `employee` (`employee_pk`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -353,6 +353,24 @@ CREATE TABLE `overtime_type` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `pagibig_contribution_rule`
+--
+
+DROP TABLE IF EXISTS `pagibig_contribution_rule`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pagibig_contribution_rule` (
+  `rule_id` int NOT NULL AUTO_INCREMENT,
+  `min_salary` decimal(10,2) DEFAULT NULL,
+  `max_salary` decimal(10,2) DEFAULT NULL,
+  `employee_rate` decimal(5,2) DEFAULT NULL,
+  `employer_rate` decimal(5,2) DEFAULT NULL,
+  `max_contribution` decimal(10,2) DEFAULT NULL,
+  PRIMARY KEY (`rule_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `payroll`
 --
 
@@ -487,6 +505,23 @@ CREATE TABLE `permission` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `philhealth_contribution_rule`
+--
+
+DROP TABLE IF EXISTS `philhealth_contribution_rule`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `philhealth_contribution_rule` (
+  `rule_id` int NOT NULL AUTO_INCREMENT,
+  `min_salary` decimal(10,2) DEFAULT NULL,
+  `max_salary` decimal(10,2) DEFAULT NULL,
+  `premium_rate` decimal(5,2) DEFAULT NULL,
+  `employee_share` decimal(5,2) DEFAULT NULL,
+  PRIMARY KEY (`rule_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `role`
 --
 
@@ -516,6 +551,22 @@ CREATE TABLE `role_permission` (
   CONSTRAINT `role_permission_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE CASCADE,
   CONSTRAINT `role_permission_ibfk_2` FOREIGN KEY (`permission_id`) REFERENCES `permission` (`permission_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `sss_contribution_bracket`
+--
+
+DROP TABLE IF EXISTS `sss_contribution_bracket`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `sss_contribution_bracket` (
+  `bracket_id` int NOT NULL AUTO_INCREMENT,
+  `min_compensation` decimal(10,2) DEFAULT NULL,
+  `max_compensation` decimal(10,2) DEFAULT NULL,
+  `contribution` decimal(10,2) DEFAULT NULL,
+  PRIMARY KEY (`bracket_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -552,27 +603,83 @@ SET @saved_cs_client     = @@character_set_client;
 /*!50001 CREATE VIEW `vw_employee_payslip` AS SELECT 
  1 AS `employee_id`,
  1 AS `employee_name`,
- 1 AS `employee_position_department`,
- 1 AS `period_start_date`,
- 1 AS `period_end_date`,
+ 1 AS `department_name`,
+ 1 AS `position_name`,
+ 1 AS `period_start`,
+ 1 AS `period_end`,
  1 AS `monthly_rate`,
  1 AS `daily_rate`,
  1 AS `days_worked`,
- 1 AS `overtime_hours`,
+ 1 AS `total_hours_worked`,
  1 AS `gross_income`,
  1 AS `rice_subsidy`,
  1 AS `phone_allowance`,
  1 AS `clothing_allowance`,
  1 AS `total_benefits`,
- 1 AS `social_security_system`,
+ 1 AS `sss`,
  1 AS `philhealth`,
  1 AS `pagibig`,
+ 1 AS `taxable_income`,
  1 AS `withholding_tax`,
  1 AS `total_deductions`,
- 1 AS `summary_gross_income`,
- 1 AS `summary_benefits`,
- 1 AS `summary_deductions`,
  1 AS `take_home_pay`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary view structure for view `vw_payroll_core`
+--
+
+DROP TABLE IF EXISTS `vw_payroll_core`;
+/*!50001 DROP VIEW IF EXISTS `vw_payroll_core`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `vw_payroll_core` AS SELECT 
+ 1 AS `employee_pk`,
+ 1 AS `employee_no`,
+ 1 AS `employee_name`,
+ 1 AS `sss_number`,
+ 1 AS `philhealth_number`,
+ 1 AS `pagibig_number`,
+ 1 AS `tin_number`,
+ 1 AS `department_name`,
+ 1 AS `position_name`,
+ 1 AS `monthly_rate`,
+ 1 AS `gross_income`,
+ 1 AS `rice_subsidy`,
+ 1 AS `phone_allowance`,
+ 1 AS `clothing_allowance`,
+ 1 AS `total_benefits`,
+ 1 AS `sss_contribution`,
+ 1 AS `philhealth_contribution`,
+ 1 AS `pagibig_contribution`,
+ 1 AS `taxable_income`,
+ 1 AS `withholding_tax`,
+ 1 AS `net_pay`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary view structure for view `vw_payroll_summary`
+--
+
+DROP TABLE IF EXISTS `vw_payroll_summary`;
+/*!50001 DROP VIEW IF EXISTS `vw_payroll_summary`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `vw_payroll_summary` AS SELECT 
+ 1 AS `employee_no`,
+ 1 AS `employee_name`,
+ 1 AS `position_name`,
+ 1 AS `department_name`,
+ 1 AS `gross_income`,
+ 1 AS `sss_number`,
+ 1 AS `sss_contribution`,
+ 1 AS `philhealth_number`,
+ 1 AS `philhealth_contribution`,
+ 1 AS `pagibig_number`,
+ 1 AS `pagibig_contribution`,
+ 1 AS `tin_number`,
+ 1 AS `withholding_tax`,
+ 1 AS `net_pay`*/;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -611,7 +718,43 @@ CREATE TABLE `withholding_tax_bracket` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`aoop_user`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `vw_employee_payslip` AS with `payroll_base` as (select `e`.`employee_pk` AS `employee_pk`,`e`.`employee_no` AS `employee_id`,concat(`e`.`last_name`,', ',`e`.`first_name`) AS `employee_name`,concat(`jp`.`position_name`,' / ',`d`.`department_name`) AS `employee_position_department`,min(`ar`.`attendance_date`) AS `period_start_date`,max(`ar`.`attendance_date`) AS `period_end_date`,`ep`.`basic_salary` AS `monthly_rate`,round((`ep`.`basic_salary` / 20),2) AS `daily_rate`,count(distinct `ar`.`attendance_date`) AS `days_worked`,0 AS `overtime_hours`,round(((`ep`.`basic_salary` / 20) * count(distinct `ar`.`attendance_date`)),2) AS `gross_income`,coalesce(`es`.`rice_subsidy`,0) AS `rice_subsidy`,coalesce(`es`.`phone_allowance`,0) AS `phone_allowance`,coalesce(`es`.`clothing_allowance`,0) AS `clothing_allowance`,((coalesce(`es`.`rice_subsidy`,0) + coalesce(`es`.`phone_allowance`,0)) + coalesce(`es`.`clothing_allowance`,0)) AS `total_benefits`,900 AS `social_security_system`,450 AS `philhealth`,100 AS `pagibig` from (((((`employee` `e` join `employee_position` `ep` on((`e`.`employee_pk` = `ep`.`employee_pk`))) join `job_position` `jp` on((`ep`.`position_id` = `jp`.`position_id`))) join `department` `d` on((`ep`.`department_id` = `d`.`department_id`))) left join `attendance_record` `ar` on((`e`.`employee_pk` = `ar`.`employee_pk`))) left join `employee_staging` `es` on((`es`.`employee_no` = `e`.`employee_no`))) group by `e`.`employee_pk`,`e`.`employee_no`,`e`.`first_name`,`e`.`last_name`,`jp`.`position_name`,`d`.`department_name`,`ep`.`basic_salary`,`es`.`rice_subsidy`,`es`.`phone_allowance`,`es`.`clothing_allowance`), `tax_computation` as (select `p`.`employee_pk` AS `employee_pk`,`p`.`employee_id` AS `employee_id`,`p`.`employee_name` AS `employee_name`,`p`.`employee_position_department` AS `employee_position_department`,`p`.`period_start_date` AS `period_start_date`,`p`.`period_end_date` AS `period_end_date`,`p`.`monthly_rate` AS `monthly_rate`,`p`.`daily_rate` AS `daily_rate`,`p`.`days_worked` AS `days_worked`,`p`.`overtime_hours` AS `overtime_hours`,`p`.`gross_income` AS `gross_income`,`p`.`rice_subsidy` AS `rice_subsidy`,`p`.`phone_allowance` AS `phone_allowance`,`p`.`clothing_allowance` AS `clothing_allowance`,`p`.`total_benefits` AS `total_benefits`,`p`.`social_security_system` AS `social_security_system`,`p`.`philhealth` AS `philhealth`,`p`.`pagibig` AS `pagibig`,((`p`.`gross_income` + `p`.`total_benefits`) - ((`p`.`social_security_system` + `p`.`philhealth`) + `p`.`pagibig`)) AS `taxable_income` from `payroll_base` `p`), `final_payroll` as (select `t`.`employee_pk` AS `employee_pk`,`t`.`employee_id` AS `employee_id`,`t`.`employee_name` AS `employee_name`,`t`.`employee_position_department` AS `employee_position_department`,`t`.`period_start_date` AS `period_start_date`,`t`.`period_end_date` AS `period_end_date`,`t`.`monthly_rate` AS `monthly_rate`,`t`.`daily_rate` AS `daily_rate`,`t`.`days_worked` AS `days_worked`,`t`.`overtime_hours` AS `overtime_hours`,`t`.`gross_income` AS `gross_income`,`t`.`rice_subsidy` AS `rice_subsidy`,`t`.`phone_allowance` AS `phone_allowance`,`t`.`clothing_allowance` AS `clothing_allowance`,`t`.`total_benefits` AS `total_benefits`,`t`.`social_security_system` AS `social_security_system`,`t`.`philhealth` AS `philhealth`,`t`.`pagibig` AS `pagibig`,`t`.`taxable_income` AS `taxable_income`,round(coalesce(((`wtb`.`base_tax` / 2) + ((`t`.`taxable_income` - (`wtb`.`min_salary` / 2)) * `wtb`.`excess_rate`)),0),2) AS `withholding_tax` from (`tax_computation` `t` left join `withholding_tax_bracket` `wtb` on(((`t`.`taxable_income` >= (`wtb`.`min_salary` / 2)) and ((`t`.`taxable_income` < (`wtb`.`max_salary` / 2)) or (`wtb`.`max_salary` is null)))))) select `final_payroll`.`employee_id` AS `employee_id`,`final_payroll`.`employee_name` AS `employee_name`,`final_payroll`.`employee_position_department` AS `employee_position_department`,`final_payroll`.`period_start_date` AS `period_start_date`,`final_payroll`.`period_end_date` AS `period_end_date`,`final_payroll`.`monthly_rate` AS `monthly_rate`,`final_payroll`.`daily_rate` AS `daily_rate`,`final_payroll`.`days_worked` AS `days_worked`,`final_payroll`.`overtime_hours` AS `overtime_hours`,`final_payroll`.`gross_income` AS `gross_income`,`final_payroll`.`rice_subsidy` AS `rice_subsidy`,`final_payroll`.`phone_allowance` AS `phone_allowance`,`final_payroll`.`clothing_allowance` AS `clothing_allowance`,`final_payroll`.`total_benefits` AS `total_benefits`,`final_payroll`.`social_security_system` AS `social_security_system`,`final_payroll`.`philhealth` AS `philhealth`,`final_payroll`.`pagibig` AS `pagibig`,`final_payroll`.`withholding_tax` AS `withholding_tax`,(((`final_payroll`.`social_security_system` + `final_payroll`.`philhealth`) + `final_payroll`.`pagibig`) + `final_payroll`.`withholding_tax`) AS `total_deductions`,`final_payroll`.`gross_income` AS `summary_gross_income`,`final_payroll`.`total_benefits` AS `summary_benefits`,(((`final_payroll`.`social_security_system` + `final_payroll`.`philhealth`) + `final_payroll`.`pagibig`) + `final_payroll`.`withholding_tax`) AS `summary_deductions`,((`final_payroll`.`gross_income` + `final_payroll`.`total_benefits`) - (((`final_payroll`.`social_security_system` + `final_payroll`.`philhealth`) + `final_payroll`.`pagibig`) + `final_payroll`.`withholding_tax`)) AS `take_home_pay` from `final_payroll` */;
+/*!50001 VIEW `vw_employee_payslip` AS with `payroll_period` as (select '2024-12-01' AS `period_start`,'2024-12-15' AS `period_end`), `attendance_filtered` as (select `ar`.`employee_pk` AS `employee_pk`,`ar`.`attendance_date` AS `attendance_date`,`ar`.`hours_worked` AS `hours_worked` from (`attendance_record` `ar` join `payroll_period` `p` on((`ar`.`attendance_date` between `p`.`period_start` and `p`.`period_end`)))), `payroll_base` as (select `e`.`employee_pk` AS `employee_pk`,`e`.`employee_no` AS `employee_id`,concat(`e`.`last_name`,', ',`e`.`first_name`) AS `employee_name`,`d`.`department_name` AS `department_name`,`jp`.`position_name` AS `position_name`,`p`.`period_start` AS `period_start`,`p`.`period_end` AS `period_end`,`ep`.`basic_salary` AS `monthly_rate`,round((`ep`.`basic_salary` / 22),2) AS `daily_rate`,count(distinct `a`.`attendance_date`) AS `days_worked`,coalesce(sum(`a`.`hours_worked`),0) AS `total_hours_worked` from (((((`employee` `e` join `payroll_period` `p`) join `employee_position` `ep` on((`e`.`employee_pk` = `ep`.`employee_pk`))) join `job_position` `jp` on((`ep`.`position_id` = `jp`.`position_id`))) join `department` `d` on((`ep`.`department_id` = `d`.`department_id`))) left join `attendance_filtered` `a` on((`e`.`employee_pk` = `a`.`employee_pk`))) group by `e`.`employee_pk`,`e`.`employee_no`,`e`.`last_name`,`e`.`first_name`,`d`.`department_name`,`jp`.`position_name`,`ep`.`basic_salary`,`p`.`period_start`,`p`.`period_end`), `calc` as (select `b`.`employee_pk` AS `employee_pk`,`b`.`employee_id` AS `employee_id`,`b`.`employee_name` AS `employee_name`,`b`.`department_name` AS `department_name`,`b`.`position_name` AS `position_name`,`b`.`period_start` AS `period_start`,`b`.`period_end` AS `period_end`,`b`.`monthly_rate` AS `monthly_rate`,`b`.`daily_rate` AS `daily_rate`,`b`.`days_worked` AS `days_worked`,`b`.`total_hours_worked` AS `total_hours_worked`,round((`b`.`daily_rate` * `b`.`days_worked`),2) AS `gross_income`,round((coalesce(`es`.`rice_subsidy`,0) / 2),2) AS `rice_subsidy`,round((coalesce(`es`.`phone_allowance`,0) / 2),2) AS `phone_allowance`,round((coalesce(`es`.`clothing_allowance`,0) / 2),2) AS `clothing_allowance`,round(((round((coalesce(`es`.`rice_subsidy`,0) / 2),2) + round((coalesce(`es`.`phone_allowance`,0) / 2),2)) + round((coalesce(`es`.`clothing_allowance`,0) / 2),2)),2) AS `total_benefits`,round(coalesce((select `s`.`contribution` from `sss_contribution_bracket` `s` where ((`b`.`daily_rate` * `b`.`days_worked`) between `s`.`min_compensation` and `s`.`max_compensation`) limit 1),0),2) AS `sss`,round(coalesce((select round((((`b`.`daily_rate` * `b`.`days_worked`) * `r`.`premium_rate`) * `r`.`employee_share`),2) from `philhealth_contribution_rule` `r` where ((`b`.`daily_rate` * `b`.`days_worked`) between `r`.`min_salary` and `r`.`max_salary`) limit 1),0),2) AS `philhealth`,round(coalesce((select least(((`b`.`daily_rate` * `b`.`days_worked`) * `r`.`employee_rate`),`r`.`max_contribution`) from `pagibig_contribution_rule` `r` where ((`b`.`daily_rate` * `b`.`days_worked`) between `r`.`min_salary` and `r`.`max_salary`) limit 1),0),2) AS `pagibig` from (`payroll_base` `b` left join `employee_staging` `es` on((`es`.`employee_no` = `b`.`employee_id`)))), `tax` as (select `c`.`employee_pk` AS `employee_pk`,`c`.`employee_id` AS `employee_id`,`c`.`employee_name` AS `employee_name`,`c`.`department_name` AS `department_name`,`c`.`position_name` AS `position_name`,`c`.`period_start` AS `period_start`,`c`.`period_end` AS `period_end`,`c`.`monthly_rate` AS `monthly_rate`,`c`.`daily_rate` AS `daily_rate`,`c`.`days_worked` AS `days_worked`,`c`.`total_hours_worked` AS `total_hours_worked`,`c`.`gross_income` AS `gross_income`,`c`.`rice_subsidy` AS `rice_subsidy`,`c`.`phone_allowance` AS `phone_allowance`,`c`.`clothing_allowance` AS `clothing_allowance`,`c`.`total_benefits` AS `total_benefits`,`c`.`sss` AS `sss`,`c`.`philhealth` AS `philhealth`,`c`.`pagibig` AS `pagibig`,round(((`c`.`gross_income` + `c`.`total_benefits`) - ((`c`.`sss` + `c`.`philhealth`) + `c`.`pagibig`)),2) AS `taxable_income` from `calc` `c`), `final` as (select `t`.`employee_pk` AS `employee_pk`,`t`.`employee_id` AS `employee_id`,`t`.`employee_name` AS `employee_name`,`t`.`department_name` AS `department_name`,`t`.`position_name` AS `position_name`,`t`.`period_start` AS `period_start`,`t`.`period_end` AS `period_end`,`t`.`monthly_rate` AS `monthly_rate`,`t`.`daily_rate` AS `daily_rate`,`t`.`days_worked` AS `days_worked`,`t`.`total_hours_worked` AS `total_hours_worked`,`t`.`gross_income` AS `gross_income`,`t`.`rice_subsidy` AS `rice_subsidy`,`t`.`phone_allowance` AS `phone_allowance`,`t`.`clothing_allowance` AS `clothing_allowance`,`t`.`total_benefits` AS `total_benefits`,`t`.`sss` AS `sss`,`t`.`philhealth` AS `philhealth`,`t`.`pagibig` AS `pagibig`,`t`.`taxable_income` AS `taxable_income`,round(coalesce((select (`w`.`base_tax` + ((`t`.`taxable_income` - `w`.`min_salary`) * `w`.`excess_rate`)) from `withholding_tax_bracket` `w` where ((`t`.`taxable_income` >= `w`.`min_salary`) and ((`t`.`taxable_income` <= `w`.`max_salary`) or (`w`.`max_salary` is null))) order by `w`.`min_salary` desc limit 1),0),2) AS `withholding_tax` from `tax` `t`) select `final`.`employee_id` AS `employee_id`,`final`.`employee_name` AS `employee_name`,`final`.`department_name` AS `department_name`,`final`.`position_name` AS `position_name`,`final`.`period_start` AS `period_start`,`final`.`period_end` AS `period_end`,`final`.`monthly_rate` AS `monthly_rate`,`final`.`daily_rate` AS `daily_rate`,`final`.`days_worked` AS `days_worked`,`final`.`total_hours_worked` AS `total_hours_worked`,`final`.`gross_income` AS `gross_income`,`final`.`rice_subsidy` AS `rice_subsidy`,`final`.`phone_allowance` AS `phone_allowance`,`final`.`clothing_allowance` AS `clothing_allowance`,`final`.`total_benefits` AS `total_benefits`,`final`.`sss` AS `sss`,`final`.`philhealth` AS `philhealth`,`final`.`pagibig` AS `pagibig`,`final`.`taxable_income` AS `taxable_income`,`final`.`withholding_tax` AS `withholding_tax`,round((((`final`.`sss` + `final`.`philhealth`) + `final`.`pagibig`) + `final`.`withholding_tax`),2) AS `total_deductions`,round(((`final`.`gross_income` + `final`.`total_benefits`) - (((`final`.`sss` + `final`.`philhealth`) + `final`.`pagibig`) + `final`.`withholding_tax`)),2) AS `take_home_pay` from `final` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `vw_payroll_core`
+--
+
+/*!50001 DROP VIEW IF EXISTS `vw_payroll_core`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`aoop_user`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `vw_payroll_core` AS with `payroll_period` as (select '2024-12-01' AS `period_start`,'2024-12-31' AS `period_end`), `attendance_filtered` as (select `ar`.`employee_pk` AS `employee_pk`,`ar`.`attendance_date` AS `attendance_date` from (`attendance_record` `ar` join `payroll_period` `p` on((`ar`.`attendance_date` between `p`.`period_start` and `p`.`period_end`)))), `payroll_base` as (select `e`.`employee_pk` AS `employee_pk`,`e`.`employee_no` AS `employee_no`,concat(`e`.`last_name`,', ',`e`.`first_name`) AS `employee_name`,`e`.`sss_number` AS `sss_number`,`e`.`philhealth_number` AS `philhealth_number`,`e`.`pagibig_number` AS `pagibig_number`,`e`.`tin_number` AS `tin_number`,`d`.`department_name` AS `department_name`,`jp`.`position_name` AS `position_name`,`ep`.`basic_salary` AS `monthly_rate` from (((`employee` `e` join `employee_position` `ep` on((`e`.`employee_pk` = `ep`.`employee_pk`))) join `job_position` `jp` on((`ep`.`position_id` = `jp`.`position_id`))) join `department` `d` on((`ep`.`department_id` = `d`.`department_id`))) where exists(select 1 from `attendance_filtered` `a` where (`a`.`employee_pk` = `e`.`employee_pk`))), `calc` as (select `b`.`employee_pk` AS `employee_pk`,`b`.`employee_no` AS `employee_no`,`b`.`employee_name` AS `employee_name`,`b`.`sss_number` AS `sss_number`,`b`.`philhealth_number` AS `philhealth_number`,`b`.`pagibig_number` AS `pagibig_number`,`b`.`tin_number` AS `tin_number`,`b`.`department_name` AS `department_name`,`b`.`position_name` AS `position_name`,`b`.`monthly_rate` AS `monthly_rate`,round(`b`.`monthly_rate`,2) AS `gross_income`,round(coalesce(`es`.`rice_subsidy`,0),2) AS `rice_subsidy`,round(coalesce(`es`.`phone_allowance`,0),2) AS `phone_allowance`,round(coalesce(`es`.`clothing_allowance`,0),2) AS `clothing_allowance`,round(((coalesce(`es`.`rice_subsidy`,0) + coalesce(`es`.`phone_allowance`,0)) + coalesce(`es`.`clothing_allowance`,0)),2) AS `total_benefits` from (`payroll_base` `b` left join `employee_staging` `es` on((`es`.`employee_no` = `b`.`employee_no`)))), `deductions` as (select `c`.`employee_pk` AS `employee_pk`,`c`.`employee_no` AS `employee_no`,`c`.`employee_name` AS `employee_name`,`c`.`sss_number` AS `sss_number`,`c`.`philhealth_number` AS `philhealth_number`,`c`.`pagibig_number` AS `pagibig_number`,`c`.`tin_number` AS `tin_number`,`c`.`department_name` AS `department_name`,`c`.`position_name` AS `position_name`,`c`.`monthly_rate` AS `monthly_rate`,`c`.`gross_income` AS `gross_income`,`c`.`rice_subsidy` AS `rice_subsidy`,`c`.`phone_allowance` AS `phone_allowance`,`c`.`clothing_allowance` AS `clothing_allowance`,`c`.`total_benefits` AS `total_benefits`,round(coalesce((select `s`.`contribution` from `sss_contribution_bracket` `s` where (`c`.`gross_income` between `s`.`min_compensation` and `s`.`max_compensation`) limit 1),0),2) AS `sss_contribution`,round(coalesce((select ((`c`.`gross_income` * `r`.`premium_rate`) * `r`.`employee_share`) from `philhealth_contribution_rule` `r` where (`c`.`gross_income` between `r`.`min_salary` and `r`.`max_salary`) limit 1),0),2) AS `philhealth_contribution`,round(coalesce((select least((`c`.`gross_income` * `r`.`employee_rate`),`r`.`max_contribution`) from `pagibig_contribution_rule` `r` where (`c`.`gross_income` between `r`.`min_salary` and `r`.`max_salary`) limit 1),0),2) AS `pagibig_contribution` from `calc` `c`), `tax_calc` as (select `d`.`employee_pk` AS `employee_pk`,`d`.`employee_no` AS `employee_no`,`d`.`employee_name` AS `employee_name`,`d`.`sss_number` AS `sss_number`,`d`.`philhealth_number` AS `philhealth_number`,`d`.`pagibig_number` AS `pagibig_number`,`d`.`tin_number` AS `tin_number`,`d`.`department_name` AS `department_name`,`d`.`position_name` AS `position_name`,`d`.`monthly_rate` AS `monthly_rate`,`d`.`gross_income` AS `gross_income`,`d`.`rice_subsidy` AS `rice_subsidy`,`d`.`phone_allowance` AS `phone_allowance`,`d`.`clothing_allowance` AS `clothing_allowance`,`d`.`total_benefits` AS `total_benefits`,`d`.`sss_contribution` AS `sss_contribution`,`d`.`philhealth_contribution` AS `philhealth_contribution`,`d`.`pagibig_contribution` AS `pagibig_contribution`,round(((`d`.`gross_income` + `d`.`total_benefits`) - ((`d`.`sss_contribution` + `d`.`philhealth_contribution`) + `d`.`pagibig_contribution`)),2) AS `taxable_income` from `deductions` `d`) select `t`.`employee_pk` AS `employee_pk`,`t`.`employee_no` AS `employee_no`,`t`.`employee_name` AS `employee_name`,`t`.`sss_number` AS `sss_number`,`t`.`philhealth_number` AS `philhealth_number`,`t`.`pagibig_number` AS `pagibig_number`,`t`.`tin_number` AS `tin_number`,`t`.`department_name` AS `department_name`,`t`.`position_name` AS `position_name`,`t`.`monthly_rate` AS `monthly_rate`,`t`.`gross_income` AS `gross_income`,`t`.`rice_subsidy` AS `rice_subsidy`,`t`.`phone_allowance` AS `phone_allowance`,`t`.`clothing_allowance` AS `clothing_allowance`,`t`.`total_benefits` AS `total_benefits`,`t`.`sss_contribution` AS `sss_contribution`,`t`.`philhealth_contribution` AS `philhealth_contribution`,`t`.`pagibig_contribution` AS `pagibig_contribution`,`t`.`taxable_income` AS `taxable_income`,round(coalesce((select (`w`.`base_tax` + ((`t`.`taxable_income` - `w`.`min_salary`) * `w`.`excess_rate`)) from `withholding_tax_bracket` `w` where ((`t`.`taxable_income` >= `w`.`min_salary`) and ((`t`.`taxable_income` <= `w`.`max_salary`) or (`w`.`max_salary` is null))) order by `w`.`min_salary` desc limit 1),0),2) AS `withholding_tax`,round(((`t`.`gross_income` + `t`.`total_benefits`) - (((`t`.`sss_contribution` + `t`.`philhealth_contribution`) + `t`.`pagibig_contribution`) + coalesce((select (`w`.`base_tax` + ((`t`.`taxable_income` - `w`.`min_salary`) * `w`.`excess_rate`)) from `withholding_tax_bracket` `w` where ((`t`.`taxable_income` >= `w`.`min_salary`) and ((`t`.`taxable_income` <= `w`.`max_salary`) or (`w`.`max_salary` is null))) order by `w`.`min_salary` desc limit 1),0))),2) AS `net_pay` from `tax_calc` `t` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `vw_payroll_summary`
+--
+
+/*!50001 DROP VIEW IF EXISTS `vw_payroll_summary`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`aoop_user`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `vw_payroll_summary` AS select `vw_payroll_core`.`employee_no` AS `employee_no`,`vw_payroll_core`.`employee_name` AS `employee_name`,`vw_payroll_core`.`position_name` AS `position_name`,`vw_payroll_core`.`department_name` AS `department_name`,`vw_payroll_core`.`gross_income` AS `gross_income`,`vw_payroll_core`.`sss_number` AS `sss_number`,`vw_payroll_core`.`sss_contribution` AS `sss_contribution`,`vw_payroll_core`.`philhealth_number` AS `philhealth_number`,`vw_payroll_core`.`philhealth_contribution` AS `philhealth_contribution`,`vw_payroll_core`.`pagibig_number` AS `pagibig_number`,`vw_payroll_core`.`pagibig_contribution` AS `pagibig_contribution`,`vw_payroll_core`.`tin_number` AS `tin_number`,`vw_payroll_core`.`withholding_tax` AS `withholding_tax`,`vw_payroll_core`.`net_pay` AS `net_pay` from `vw_payroll_core` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -626,4 +769,4 @@ SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-21 10:44:39
+-- Dump completed on 2026-06-23  3:27:03

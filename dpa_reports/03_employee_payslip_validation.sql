@@ -10,4 +10,4 @@ SELECT
     total_deductions,
     take_home_pay
 FROM vw_employee_payslip
-WHERE employee_id = '10015';
+WHERE employee_id = '10005';

@@ -126,18 +126,49 @@ try:
         JOIN job_position jp ON jp.position_name = s.job_position
 
         LEFT JOIN department d
-            ON d.department_name = CASE
-                WHEN s.job_position LIKE 'IT%' THEN 'IT'
-                WHEN s.job_position LIKE 'HR%' THEN 'HR'
-                WHEN s.job_position LIKE 'Payroll%' THEN 'Finance'
-                WHEN s.job_position LIKE 'Finance%' THEN 'Finance'
-                WHEN s.job_position LIKE 'Accounting%' THEN 'Accounting'
-                WHEN s.job_position LIKE 'Chief%' THEN 'Leadership'
-                WHEN s.job_position LIKE 'Customer%' THEN 'Operations'
-                WHEN s.job_position LIKE 'Sales%' THEN 'Sales'
-                WHEN s.job_position LIKE 'Supply%' THEN 'Operations'
-                ELSE 'General'
-            END;
+    ON d.department_name = CASE
+
+        WHEN s.job_position IN (
+            'Chief Executive Officer',
+            'Chief Operating Officer',
+            'Chief Finance Officer',
+            'Chief Marketing Officer'
+        ) THEN 'Leadership'
+
+        WHEN s.job_position IN (
+            'IT Operations and Systems'
+        ) THEN 'IT'
+
+        WHEN s.job_position IN (
+            'HR Manager',
+            'HR Team Leader',
+            'HR Rank and File'
+        ) THEN 'HR'
+
+        WHEN s.job_position IN (
+            'Payroll Manager',
+            'Payroll Team Leader',
+            'Payroll Rank and File'
+        ) THEN 'Finance'
+
+        WHEN s.job_position IN (
+            'Accounting Head',
+            'Account Manager',
+            'Account Team Leader',
+            'Account Rank and File'
+        ) THEN 'Accounting'
+
+        WHEN s.job_position IN (
+            'Sales & Marketing'
+        ) THEN 'Sales'
+
+        WHEN s.job_position IN (
+            'Supply Chain and Logistics',
+            'Customer Service and Relations'
+        ) THEN 'Operations'
+
+        ELSE 'General'
+    END
     """)
     conn.commit()
 

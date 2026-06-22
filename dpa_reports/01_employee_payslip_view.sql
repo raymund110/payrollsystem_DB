@@ -17,18 +17,12 @@ DROP VIEW IF EXISTS vw_employee_payslip;
 
 CREATE OR REPLACE VIEW vw_employee_payslip AS
 
-/* =========================
-   FIXED PAYROLL PERIOD
-   ========================= */
 WITH payroll_period AS (
     SELECT
-        '2024-06-16' AS period_start,
-        '2024-06-30' AS period_end
+        '2024-12-01' AS period_start,
+        '2024-12-15' AS period_end
 ),
 
-/* =========================
-   FILTER ATTENDANCE
-   ========================= */
 attendance_filtered AS (
     SELECT
         ar.employee_pk,
@@ -39,9 +33,6 @@ attendance_filtered AS (
         ON ar.attendance_date BETWEEN p.period_start AND p.period_end
 ),
 
-/* =========================
-   BASE PAYROLL DATA
-   ========================= */
 payroll_base AS (
     SELECT
         e.employee_pk,
@@ -55,8 +46,7 @@ payroll_base AS (
         p.period_end,
 
         ep.basic_salary AS monthly_rate,
-
-        ROUND(ep.basic_salary / 20, 2) AS daily_rate,
+        ROUND(ep.basic_salary / 22, 2) AS daily_rate,
 
         COUNT(DISTINCT a.attendance_date) AS days_worked,
         COALESCE(SUM(a.hours_worked), 0) AS total_hours_worked
@@ -66,10 +56,8 @@ payroll_base AS (
 
     JOIN employee_position ep
         ON e.employee_pk = ep.employee_pk
-
     JOIN job_position jp
         ON ep.position_id = jp.position_id
-
     JOIN department d
         ON ep.department_id = d.department_id
 
@@ -88,98 +76,93 @@ payroll_base AS (
         p.period_end
 ),
 
-/* =========================
-   COMPUTATIONS
-   ========================= */
 calc AS (
     SELECT
         b.*,
 
-        /* SAMPLE-ALIGNED GROSS PAY */
         ROUND(b.daily_rate * b.days_worked, 2) AS gross_income,
 
-        /* BENEFITS (SOURCE OF TRUTH: employee_staging) */
-        COALESCE(es.rice_subsidy, 0) AS rice_subsidy,
-        COALESCE(es.phone_allowance, 0) AS phone_allowance,
-        COALESCE(es.clothing_allowance, 0) AS clothing_allowance,
+        ROUND(COALESCE(es.rice_subsidy, 0) / 2, 2) AS rice_subsidy,
+        ROUND(COALESCE(es.phone_allowance, 0) / 2, 2) AS phone_allowance,
+        ROUND(COALESCE(es.clothing_allowance, 0) / 2, 2) AS clothing_allowance,
 
-        (
-            COALESCE(es.rice_subsidy, 0)
-            + COALESCE(es.phone_allowance, 0)
-            + COALESCE(es.clothing_allowance, 0)
+        ROUND(
+            ROUND(COALESCE(es.rice_subsidy, 0) / 2, 2)
+            + ROUND(COALESCE(es.phone_allowance, 0) / 2, 2)
+            + ROUND(COALESCE(es.clothing_allowance, 0) / 2, 2),
+            2
         ) AS total_benefits,
 
-        /* =========================
-           STATUTORY (TABLE-DRIVEN)
-           ========================= */
-
-        COALESCE((
+        ROUND(COALESCE((
             SELECT contribution
             FROM sss_contribution_bracket s
-            WHERE b.daily_rate * b.days_worked
+            WHERE (b.daily_rate * b.days_worked)
                   BETWEEN s.min_compensation AND s.max_compensation
             LIMIT 1
-        ), 0) AS sss,
+        ), 0), 2) AS sss,
 
-        COALESCE((
-            SELECT ROUND((b.daily_rate * b.days_worked) * r.premium_rate * r.employee_share, 2)
+        ROUND(COALESCE((
+            SELECT ROUND(
+                (b.daily_rate * b.days_worked)
+                * r.premium_rate
+                * r.employee_share,
+                2
+            )
             FROM philhealth_contribution_rule r
             WHERE (b.daily_rate * b.days_worked)
                   BETWEEN r.min_salary AND r.max_salary
             LIMIT 1
-        ), 0) AS philhealth,
+        ), 0), 2) AS philhealth,
 
-        COALESCE((
-            SELECT LEAST((b.daily_rate * b.days_worked) * r.employee_rate, r.max_contribution)
+        ROUND(COALESCE((
+            SELECT LEAST(
+                (b.daily_rate * b.days_worked) * r.employee_rate,
+                r.max_contribution
+            )
             FROM pagibig_contribution_rule r
             WHERE (b.daily_rate * b.days_worked)
                   BETWEEN r.min_salary AND r.max_salary
             LIMIT 1
-        ), 0) AS pagibig
+        ), 0), 2) AS pagibig
 
     FROM payroll_base b
     LEFT JOIN employee_staging es
         ON es.employee_no = b.employee_id
 ),
 
-/* =========================
-   TAXABLE INCOME
-   ========================= */
 tax AS (
     SELECT
         c.*,
-        (
+        ROUND(
             gross_income
             + total_benefits
-            - (sss + philhealth + pagibig)
+            - (sss + philhealth + pagibig),
+            2
         ) AS taxable_income
     FROM calc c
 ),
 
-/* =========================
-   WITHHOLDING TAX
-   ========================= */
 final AS (
     SELECT
         t.*,
 
-        COALESCE((
+        ROUND(COALESCE((
             SELECT
                 w.base_tax +
                 ((t.taxable_income - w.min_salary) * w.excess_rate)
             FROM withholding_tax_bracket w
             WHERE t.taxable_income >= w.min_salary
-              AND (t.taxable_income <= w.max_salary OR w.max_salary IS NULL)
+              AND (
+                  t.taxable_income <= w.max_salary
+                  OR w.max_salary IS NULL
+              )
             ORDER BY w.min_salary DESC
             LIMIT 1
-        ), 0) AS withholding_tax
+        ), 0), 2) AS withholding_tax
 
     FROM tax t
 )
 
-/* =========================
-   OUTPUT
-   ========================= */
 SELECT
     employee_id,
     employee_name,
@@ -209,9 +192,15 @@ SELECT
     taxable_income,
     withholding_tax,
 
-    (sss + philhealth + pagibig + withholding_tax) AS total_deductions,
+    ROUND(
+        sss + philhealth + pagibig + withholding_tax,
+        2
+    ) AS total_deductions,
 
-    (gross_income + total_benefits)
-    - (sss + philhealth + pagibig + withholding_tax) AS take_home_pay
+    ROUND(
+        (gross_income + total_benefits)
+        - (sss + philhealth + pagibig + withholding_tax),
+        2
+    ) AS take_home_pay
 
 FROM final;
