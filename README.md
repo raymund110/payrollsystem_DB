@@ -448,7 +448,7 @@ source dpa_reports/03_employee_payslip_validation.sql;
 source dpa_reports/04_payroll_core_view.sql;
 
 -- # final payroll summary report
-source dpa_reports/05_payroll_summary_procedure.sql;
+source dpa_reports/05_payroll_summary_view.sql;
 
 --- # validation/testing
 source dpa_reports/06_payroll_summary_test.sql;

@@ -159,12 +159,12 @@ try:
         ) THEN 'Accounting'
 
         WHEN s.job_position IN (
-            'Sales & Marketing'
-        ) THEN 'Sales'
+            'Sales & Marketing',
+            'Customer Service and Relations'
+        ) THEN 'Marketing'
 
         WHEN s.job_position IN (
             'Supply Chain and Logistics',
-            'Customer Service and Relations'
         ) THEN 'Operations'
 
         ELSE 'General'
