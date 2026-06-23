@@ -14,6 +14,8 @@ cursor = conn.cursor()
 try:
     print("STARTING EMPLOYEE TRANSFORMATION")
 
+    conn.start_transaction()
+
     # =========================================
     # 1. EMPLOYEES
     # =========================================
@@ -54,7 +56,6 @@ try:
             tin_number = VALUES(tin_number),
             pagibig_number = VALUES(pagibig_number);
     """)
-    conn.commit()
 
     # =========================================
     # 2. JOB POSITIONS
@@ -65,10 +66,9 @@ try:
         FROM employee_staging
         WHERE job_position IS NOT NULL;
     """)
-    conn.commit()
 
     # =========================================
-    # 3. DEPARTMENT SEED (SAFE UPSERT)
+    # 3. DEPARTMENT SEED
     # =========================================
     cursor.execute("""
         INSERT INTO department (department_name, description)
@@ -84,13 +84,12 @@ try:
         ON DUPLICATE KEY UPDATE
             description = VALUES(description);
     """)
-    conn.commit()
 
     # =========================================
     # 4. EMPLOYMENT HISTORY
     # =========================================
     cursor.execute("""
-        INSERT INTO employee_employment_history (
+        INSERT IGNORE INTO employee_employment_history (
             employee_pk,
             status_name,
             effective_date
@@ -102,13 +101,12 @@ try:
         FROM employee_staging s
         JOIN employee e ON e.employee_no = s.employee_no;
     """)
-    conn.commit()
 
     # =========================================
-    # 5. POSITION + DEPARTMENT ASSIGNMENT (FIXED)
+    # 5. POSITION + DEPARTMENT ASSIGNMENT
     # =========================================
     cursor.execute("""
-        INSERT INTO employee_position (
+        INSERT IGNORE INTO employee_position (
             employee_pk,
             position_id,
             department_id,
@@ -122,55 +120,55 @@ try:
             CURDATE(),
             s.basic_salary
         FROM employee_staging s
-        JOIN employee e ON e.employee_no = s.employee_no
-        JOIN job_position jp ON jp.position_name = s.job_position
-
+        JOIN employee e
+            ON e.employee_no = s.employee_no
+        JOIN job_position jp
+            ON jp.position_name = s.job_position
         LEFT JOIN department d
-    ON d.department_name = CASE
+            ON d.department_name = CASE
 
-        WHEN s.job_position IN (
-            'Chief Executive Officer',
-            'Chief Operating Officer',
-            'Chief Finance Officer',
-            'Chief Marketing Officer'
-        ) THEN 'Leadership'
+                WHEN s.job_position IN (
+                    'Chief Executive Officer',
+                    'Chief Operating Officer',
+                    'Chief Finance Officer',
+                    'Chief Marketing Officer'
+                ) THEN 'Leadership'
 
-        WHEN s.job_position IN (
-            'IT Operations and Systems'
-        ) THEN 'IT'
+                WHEN s.job_position IN (
+                    'IT Operations and Systems'
+                ) THEN 'IT'
 
-        WHEN s.job_position IN (
-            'HR Manager',
-            'HR Team Leader',
-            'HR Rank and File'
-        ) THEN 'HR'
+                WHEN s.job_position IN (
+                    'HR Manager',
+                    'HR Team Leader',
+                    'HR Rank and File'
+                ) THEN 'HR'
 
-        WHEN s.job_position IN (
-            'Payroll Manager',
-            'Payroll Team Leader',
-            'Payroll Rank and File'
-        ) THEN 'Finance'
+                WHEN s.job_position IN (
+                    'Payroll Manager',
+                    'Payroll Team Leader',
+                    'Payroll Rank and File'
+                ) THEN 'Finance'
 
-        WHEN s.job_position IN (
-            'Accounting Head',
-            'Account Manager',
-            'Account Team Leader',
-            'Account Rank and File'
-        ) THEN 'Accounting'
+                WHEN s.job_position IN (
+                    'Accounting Head',
+                    'Account Manager',
+                    'Account Team Leader',
+                    'Account Rank and File'
+                ) THEN 'Accounting'
 
-        WHEN s.job_position IN (
-            'Sales & Marketing',
-            'Customer Service and Relations'
-        ) THEN 'Marketing'
+                WHEN s.job_position IN (
+                    'Sales & Marketing'
+                ) THEN 'Sales'
 
-        WHEN s.job_position IN (
-            'Supply Chain and Logistics',
-        ) THEN 'Operations'
+                WHEN s.job_position IN (
+                    'Customer Service and Relations',
+                    'Supply Chain and Logistics'
+                ) THEN 'Operations'
 
-        ELSE 'General'
-    END
+                ELSE 'General'
+            END;
     """)
-    conn.commit()
 
     # =========================================
     # 6. SUPERVISOR MAPPING
@@ -180,11 +178,12 @@ try:
         JOIN employee_staging s
             ON e.employee_no = s.employee_no
         JOIN employee sup
-            ON CONCAT(sup.last_name, ', ', sup.first_name) = s.supervisor_name
+            ON TRIM(CONCAT(sup.last_name, ', ', sup.first_name))
+               = TRIM(s.supervisor_name)
         SET e.supervisor_employee_pk = sup.employee_pk;
     """)
-    conn.commit()
 
+    conn.commit()
     print("TRANSFORMATION SUCCESSFUL")
 
 except Exception as e:
