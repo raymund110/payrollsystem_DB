@@ -6,30 +6,95 @@
 
 #### Purpose
 
-The purpose of this project is to develop an Employee Payslip Database Report for the MotorPH Human Resource Information System (HRIS) and Payroll System using advanced SQL techniques in MySQL. The report consolidates payroll and attendance data into a structured employee payslip that supports payroll processing, validation, and reporting requirements.
+The objective of this project is to implement database-driven payroll reporting for the **MotorPH HRIS and Payroll System** using **MySQL**, advanced SQL reporting techniques, and ETL-based data transformation.
 
-The system was implemented using the following technologies:
+The project consists of two major payroll reporting components:
 
-- **MySQL** as the database management system
-- **Aiven Cloud MySQL** for database hosting and deployment
-- **DBeaver** for database administration and SQL development
-- **MySQL Shell (mysqlsh)** for script execution and database initialization
-- **Python ETL scripts** for data extraction, transformation, and loading processes
+### 1. Employee Payslip Report
 
-#### System Scope
+Generates an individual employee payslip for a specific semi-monthly payroll period.
 
-The Employee Payslip Report includes the following information:
+### 2. Payroll Summary Report
 
-- Employee identification details
-- Position and department information
-- Payroll period coverage
-- Attendance summaries
-- Earnings computation
-- Benefits calculation
-- Mandatory deductions
-- Net pay (take-home pay) computation
+Generates a consolidated payroll report for multiple employees for a monthly reporting period.
 
-The report follows MotorPH’s **bi-monthly payroll processing schedule**.
+The system integrates employee data, attendance records, compensation information, statutory deductions, and tax computations to generate accurate payroll reports.
+
+#### Technologies Used
+
+- **MySQL** — Primary database engine
+- **DBeaver** — Database management and SQL development
+- **mysqlsh** — SQL script execution
+- **Python** — ETL scripts and data transformation
+- **Aiven Cloud MySQL** — Cloud database deployment
+
+---
+
+#### System Architecture
+
+The system follows a layered architecture:
+
+#### Data Source Layer
+
+Raw employee and attendance records.
+
+Examples:
+
+- Employee master records
+- Attendance logs
+- Payroll-related reference data
+
+---
+
+#### Staging Layer
+
+Temporary raw data ingestion tables.
+
+Tables:
+
+- `employee_staging`
+- `attendance_staging`
+
+Purpose:
+
+- Load raw CSV/source data
+- Prepare data for transformation
+
+---
+
+#### Core Database Layer
+
+Normalized HRIS and payroll schema.
+
+Key tables:
+
+- `employee`
+- `employee_position`
+- `department`
+- `job_position`
+- `attendance_record`
+
+Reference tables:
+
+- `sss_contribution_bracket`
+- `philhealth_contribution_rule`
+- `pagibig_contribution_rule`
+- `withholding_tax_bracket`
+
+---
+
+#### Reporting Layer
+
+SQL views used for payroll reporting.
+
+Employee Payslip:
+
+- `vw_employee_payslip`
+
+Payroll Summary:
+
+- `vw_payroll_core`
+- `vw_payroll_summary`
 
 ---
 
@@ -136,204 +201,260 @@ source dpa_reports/03_employee_payslip_validation.sql;
 
 ```
 
-#### Payslip Data Requirements
+---
 
-The report design was based on the standard MotorPH employee payslip format. The following data elements were identified as necessary components of the report.
-
-| Payslip Component    | Source Table      |
-| -------------------- | ----------------- |
-| Employee Information | employee          |
-| Position Assignment  | employee_position |
-| Job Position         | job_position      |
-| Department           | department        |
-| Attendance Records   | attendance_record |
-| Employee Benefits    | employee_staging  |
-
-#### SQL Techniques Applied
-
-The report implementation utilized several advanced SQL concepts, including:
-
-- SQL Views
-- INNER JOIN
-- LEFT JOIN
-- Aggregate Functions
-  - COUNT()
-  - MIN()
-  - MAX()
-
-- String concatenation using CONCAT()
-- NULL value handling using COALESCE()
-- Arithmetic expressions for payroll computations
-- Date filtering using BETWEEN
-- Data aggregation for attendance and payroll summaries
+Employee Payslip Database Report
 
 ---
 
-### Employee Payslip View Implementation
+## Purpose
 
-The Employee Payslip Report was implemented through a database view named:
-
-```sql
-vw_employee_payslip
-```
+The Employee Payslip Report generates payroll details for an individual employee during a semi-monthly payroll period.
 
 ---
 
-### Business Rules Implemented
-
-#### Payroll Cutoff Period
-
-The report follows MotorPH’s bi-monthly payroll schedule.
-
-For the second payroll cutoff period:
-
-**December 16, 2024 to December 31, 2024**
-
-```sql
-WHERE ar.attendance_date BETWEEN '2024-12-16' AND '2024-12-31'
-```
-
----
-
-#### Gross Income Calculation
+## SQL Files
 
 ```text
-Daily Rate × Days Worked
-```
-
-Daily rate is derived from:
-
-```text
-Monthly Rate ÷ 20 working days
+dpa_reports/01_employee_payslip_view.sql
+dpa_reports/02_employee_payslip_test.sql
+dpa_reports/03_employee_payslip_validation.sql
 ```
 
 ---
 
-#### Benefits Calculation
+## Report Data Requirements
 
-The following employee benefits are included:
+The report includes:
+
+- Employee ID
+- Employee Name
+- Position
+- Department
+- Payroll Period
+- Gross Income
+- Benefits
+- Deductions
+- Taxable Income
+- Take Home Pay
+
+---
+
+#### Employee Payslip Business Rules
+
+---
+
+##### Payroll Frequency
+
+Semi-monthly.
+
+Example payroll periods:
+
+- December 1–15, 2024
+- December 16–31, 2024
+
+Sample payroll period used:
+
+```sql
+WITH payroll_period AS (
+    SELECT
+        '2024-12-01' AS period_start,
+        '2024-12-15' AS period_end
+)
+```
+
+The payroll period can be modified during demonstrations or presentations.
+
+---
+
+##### Attendance Filtering
+
+Attendance records are filtered by payroll cutoff period.
+
+```sql
+WHERE attendance_date BETWEEN period_start AND period_end
+```
+
+---
+
+#### Daily Rate Formula
+
+Daily rate uses a 22-working-day basis.
+
+```text
+Daily Rate = Monthly Salary ÷ 22
+```
+
+This aligns more closely with realistic payroll computation than a 20-day basis.
+
+---
+
+#### Gross Income Formula
+
+Payslip computation is attendance-driven.
+
+```text
+Gross Income = Daily Rate × Days Worked
+```
+
+---
+
+#### Benefits
+
+Benefits are sourced from:
+
+- `employee_staging`
+
+Included benefits:
 
 - Rice Subsidy
 - Phone Allowance
 - Clothing Allowance
 
+Since payslip is semi-monthly, benefits are divided by two.
+
+```text
+Bi-monthly Benefit = Monthly Benefit ÷ 2
+```
+
 ---
 
-#### Mandatory Deductions
+#### Statutory Deductions
 
-The following statutory deductions are applied:
+The system computes:
 
-- Social Security System (SSS)
+- SSS
 - PhilHealth
-- Pag-IBIG Fund
-- Withholding Tax (computed via tax brackets)
+- Pag-IBIG
+
+These are calculated using table-driven deduction rules.
 
 ---
 
-#### Withholding Tax Computation
-
-The withholding tax is calculated using a **progressive tax bracket system** based on the `withholding_tax_bracket` table.
-
-Key logic:
-
-- Taxable income is computed as:
+#### Taxable Income Formula
 
 ```text
-Gross Income + Benefits − Statutory Contributions
-```
-
-- The appropriate tax bracket is selected based on:
-
-```sql
-t.taxable_income BETWEEN (wtb.min_salary / 2) AND (wtb.max_salary / 2)
-```
-
-- Tax formula:
-
-```text
-(base_tax / 2)
-+ ((taxable_income − (min_salary / 2)) × excess_rate)
-```
-
-This ensures alignment with **semi-monthly payroll computation logic**.
-
----
-
-#### Net Pay Calculation
-
-```text
+Taxable Income =
 Gross Income
 + Total Benefits
+− Statutory Deductions
+```
+
+---
+
+#### Withholding Tax Formula
+
+Tax is computed using table-driven tax brackets.
+
+Formula:
+
+```text
+Withholding Tax =
+Base Tax + ((Taxable Income − Minimum Salary) × Excess Rate)
+```
+
+Source table:
+
+- `withholding_tax_bracket`
+
+---
+
+#### Take Home Pay Formula
+
+```text
+Take Home Pay =
+Gross Income
++ Benefits
 − Total Deductions
 ```
 
-Where:
+---
 
-```text
-Total Deductions =
-SSS + PhilHealth + Pag-IBIG + Withholding Tax
-```
+#### Employee Payslip SQL Techniques Used
+
+The implementation uses advanced SQL techniques:
+
+- SQL Views
+- CTEs
+- INNER JOIN
+- LEFT JOIN
+- Aggregation
+- COUNT()
+- SUM()
+- ROUND()
+- COALESCE()
+- Arithmetic Expressions
+- Payroll Cutoff Filtering
 
 ---
 
-## Employee Payslip View Implementation
-
-The final view:
-
-```sql
-vw_employee_payslip
-```
-
-### Key Improvements
-
-- Employee ID standardized as:
-
-```sql
-e.employee_no AS employee_id
-```
-
-- Added progressive tax bracket computation via:
-
-```sql
-withholding_tax_bracket
-```
-
-- Semi-monthly payroll logic implemented using division by 2 for tax thresholds
-
-- Clean separation of:
-  - payroll_base
-  - tax_computation
-  - final_payroll
-
----
-
-### Tax Bracket Integration
-
-The system uses a structured tax bracket table:
-
-```sql
-withholding_tax_bracket
-```
-
-### Key Characteristics:
-
-- Progressive tax rates
-- Semi-monthly adjusted thresholds
-- Base tax + excess rate computation
-- Effective dating support
-
-### Example Bracket Structure:
-
-| Income Range   | Base Tax | Excess Rate |
-| -------------- | -------- | ----------- |
-| 0–20,832       | 0        | 0%          |
-| 20,833–33,332  | 0        | 20%         |
-| 33,333–66,666  | 2,500    | 25%         |
-| 66,667–166,666 | 10,833   | 30%         |
+📸 Screenshot Required
+Show successful execution of:
 
 ```sql
 source dpa_reports/01_employee_payslip_view.sql;
 ```
+
+Suggested filename:
+`02_view_creation.png`
+
+---
+
+#### Employee Payslip Testing and Validation
+
+---
+
+##### View Verification
+
+```sql
+SHOW FULL TABLES WHERE Table_type = 'VIEW';
+```
+
+Expected:
+
+- `vw_employee_payslip`
+
+---
+
+##### Sample Payslip Test
+
+```sql
+SELECT *
+FROM vw_employee_payslip
+WHERE employee_id = '10015';
+```
+
+Validates:
+
+- Attendance aggregation
+- Payroll computation
+- Benefits
+- Deductions
+- Take-home pay
+
+---
+
+##### Testing Script
+
+```sql
+source dpa_reports/02_employee_payslip_test.sql;
+```
+
+##### Validation Script
+
+```sql
+source dpa_reports/03_employee_payslip_validation.sql;
+```
+
+Validates:
+
+- Gross income
+- Benefits
+- Deductions
+- Tax
+- Net pay
+
+---
 
 ###### Payslip View Creation
 
@@ -421,7 +542,7 @@ source dpa_reports/03_employee_payslip_validation.sql;
 - Validate statutory deductions
 - Validate take-home pay calculations
 
-###### Payroll Report Validation (Head)
+###### Payslip Report Validation (Head)
 
 ![Payslip Report Validation - Head](https://drive.google.com/uc?export=view&id=1HTclewDiNiPgRctEUrTF2MnSXmbKX012)
 
@@ -433,13 +554,13 @@ source dpa_reports/03_employee_payslip_validation.sql;
 
 ![Payslip Report Validation - Tail](https://drive.google.com/uc?export=view&id=1Jy4EaUqNamSeiYyFXsRyCAl-5BXmmjaz)
 
-###### Revised Payroll Report View
+###### Revised Payslip Report View
 
-![Payroll Report with Withholding Tax Computation](https://drive.google.com/uc?export=view&id=1kum6auIWkdQwZ0A8pUEI-0Z0Bwy-vEBc)
+![Payslip Report with Withholding Tax Computation](https://drive.google.com/uc?export=view&id=1kum6auIWkdQwZ0A8pUEI-0Z0Bwy-vEBc)
 
 ---
 
-### Payroll Summary Report View
+### Payroll Summary Database Report
 
 ```sql
 -- # Run in sequence
@@ -455,28 +576,168 @@ source dpa_reports/06_payroll_summary_test.sql;
 
 ```
 
-### Challenges Encountered
+#### Purpose
 
-Several challenges were encountered during implementation:
+The Payroll Summary Report provides a consolidated payroll overview for multiple employees over a monthly reporting period.
 
-1. SQL formatting issues caused by hidden markdown characters and escaped symbols.
-2. Initial view aggregation included attendance records outside the intended payroll period.
-3. Payroll computations required adaptation to the organization's bi-monthly payroll structure.
-
-#### Resolutions Implemented
-
-These challenges were addressed through:
-
-- SQL syntax corrections and validation
-- View redesign and query optimization
-- Implementation of payroll-period filtering using the BETWEEN operator
+Unlike the payslip report, this report focuses on summary-level payroll reporting.
 
 ---
 
+##### SQL Files
+
+```text
+dpa_reports/04_payroll_core_view.sql
+dpa_reports/05_payroll_summary_view.sql
+dpa_reports/06_payroll_summary_test.sql
+```
+
+---
+
+##### Report Period
+
+Monthly.
+
+Sample reporting period:
+
+```text
+December 1–31, 2024
+```
+
+---
+
+#### Payroll Summary Business Rules
+
+---
+
+##### Employee Coverage
+
+Only employees with attendance records during the reporting month are included.
+
+---
+
+##### Gross Income Rule
+
+Payroll Summary uses salary-based gross income.
+
+```text
+Gross Income = Monthly Salary
+```
+
+This differs from the Employee Payslip Report.
+
+Reason:
+
+- Payslip = operational transaction report
+- Payroll Summary = management reporting report
+
+---
+
+##### Benefits Handling
+
+Benefits are included in payroll computation logic but are not displayed as separate columns in the summary report.
+
+---
+
+##### Summary Report Columns
+
+The output follows the sample MotorPH Payroll Summary Report.
+
+Columns:
+
+- Employee No
+- Employee Full Name
+- Position
+- Department
+- Gross Income
+- SSS Number
+- SSS Contribution
+- PhilHealth Number
+- PhilHealth Contribution
+- Pag-IBIG Number
+- Pag-IBIG Contribution
+- TIN
+- Withholding Tax
+- Net Pay
+
+---
+
+#### Payroll Summary SQL Design
+
+---
+
+##### Core View
+
+`vw_payroll_core`
+
+Purpose:
+
+- Aggregate payroll data
+- Compute statutory deductions
+- Compute withholding tax
+- Compute net pay
+
+---
+
+##### Summary View
+
+`vw_payroll_summary`
+
+Purpose:
+
+- Present final reporting format
+
+Example:
+
+```sql
+SELECT
+    employee_no,
+    employee_name,
+    position_name,
+    department_name,
+    gross_income,
+    sss_number,
+    sss_contribution,
+    philhealth_number,
+    philhealth_contribution,
+    pagibig_number,
+    pagibig_contribution,
+    tin_number,
+    withholding_tax,
+    net_pay
+FROM vw_payroll_core;
+```
+
+---
+
+#### Payroll Summary Testing
+
+Testing validates:
+
+- Employee inclusion
+- Monthly gross pay
+- Deduction computations
+- Net pay accuracy
+- Multi-employee reporting
+
+---
+
+Suggested validation queries:
+
+```sql
+SELECT * FROM vw_payroll_core;
+SELECT * FROM vw_payroll_summary;
+```
+
 ### Conclusion
 
-The Employee Payslip Database Report was successfully developed and implemented using MySQL views and advanced SQL techniques.
+The MotorPH HRIS and Payroll reporting system was successfully implemented using MySQL, Python ETL, and advanced SQL reporting techniques.
 
-The solution integrates employee, attendance, payroll, and benefits data into a consolidated payslip report that supports payroll processing and reporting requirements. The implementation of a bi-monthly payroll cutoff ensures alignment with real-world payroll practices.
+The project demonstrates practical implementation of:
 
-This project demonstrates the effective application of SQL joins, data aggregation, calculations, and reporting logic within a Human Resource Information System (HRIS) and Payroll Management environment.
+- Database schema design
+- ETL workflows
+- Payroll computation logic
+- Statutory deduction calculation
+- SQL reporting
+- Database testing and validation
