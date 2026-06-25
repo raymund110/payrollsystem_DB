@@ -1,6 +1,6 @@
 -- =========================================
 -- Module: Payroll Summary Procedure
--- File: 06_payroll_summary_test.sql
+-- File: 07_payroll_summary_test_all.sql
 -- Description:
 -- Test script for sp_payroll_summary procedure
 -- CONTAINS:
@@ -11,6 +11,9 @@
 -- =========================================
 
 USE payrollsystem_db;
+
+SHOW FULL TABLES
+WHERE Table_type = 'VIEW';
 
 SELECT
     employee_no AS `Employee No`,
@@ -43,10 +46,9 @@ FROM (
         tin_number,
         withholding_tax,
         net_pay,
-        0 AS is_total
+        0 AS sort_order,
+        employee_no AS emp_order
     FROM vw_payroll_summary
-    -- optional filter (remove for ALL employees)
-    WHERE employee_no IN ('10015', '10005', '10022', '10034', '10003')
 
     UNION ALL
 
@@ -65,9 +67,10 @@ FROM (
         '',
         ROUND(SUM(withholding_tax), 2),
         ROUND(SUM(net_pay), 2),
-        1
+        1,
+        999999
     FROM vw_payroll_summary
-    -- same filter here (or remove for ALL employees)
-    WHERE employee_no IN ('10015', '10005', '10022', '10034', '10003')
-) payroll_data
-ORDER BY is_total, employee_no;
+) AS payroll_data
+ORDER BY
+    sort_order,
+    emp_order;

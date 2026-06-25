@@ -21,7 +21,7 @@ SET @@SESSION.SQL_LOG_BIN= 0;
 -- GTID state at the beginning of the backup 
 --
 
-SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '5b70a220-6c99-11f1-b8c0-59a639271a0e:1-569';
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '5b70a220-6c99-11f1-b8c0-59a639271a0e:1-646';
 
 --
 -- Table structure for table `allowance_type`
@@ -63,7 +63,7 @@ CREATE TABLE `attendance_record` (
   CONSTRAINT `chk_hours_worked` CHECK ((`hours_worked` >= 0)),
   CONSTRAINT `chk_late_minutes` CHECK ((`late_minutes` >= 0)),
   CONSTRAINT `chk_undertime_minutes` CHECK ((`undertime_minutes` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=8192 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5169 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -99,7 +99,7 @@ CREATE TABLE `department` (
   `description` text,
   PRIMARY KEY (`department_id`),
   UNIQUE KEY `department_name` (`department_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -135,7 +135,7 @@ CREATE TABLE `employee` (
   KEY `idx_employee_supervisor` (`supervisor_employee_pk`),
   KEY `idx_employee_no` (`employee_no`),
   CONSTRAINT `fk_employee_supervisor` FOREIGN KEY (`supervisor_employee_pk`) REFERENCES `employee` (`employee_pk`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +155,7 @@ CREATE TABLE `employee_employment_history` (
   PRIMARY KEY (`history_id`),
   KEY `idx_employment_history_employee` (`employee_pk`),
   CONSTRAINT `fk_eh_employee` FOREIGN KEY (`employee_pk`) REFERENCES `employee` (`employee_pk`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -769,4 +769,4 @@ SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-23  3:27:03
+-- Dump completed on 2026-06-26  1:18:35
