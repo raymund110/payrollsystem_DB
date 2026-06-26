@@ -138,7 +138,7 @@ DB_PORT=3306
 
 # Setup and Execution
 
-Run scripts in order (at the project root).
+> Important: Execute SQL scripts using mysqlsh (SQL mode) from the project root directory so relative paths work correctly.
 
 ## 1. Schema Setup
 
@@ -171,6 +171,8 @@ Install requirements:
 ```bash
 pip install -r requirements.txt
 ```
+
+> Important: Execute Python scripts from the project root directory so relative paths work correctly
 
 Run ETL:
 
