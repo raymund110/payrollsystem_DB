@@ -1,4 +1,4 @@
-# MotorPH HRIS & Payroll Reporting 
+# MotorPH HRIS & Payroll Reporting
 
 ## Overview
 
@@ -62,21 +62,25 @@ Validation Scripts
 ## Key Business Rules
 
 ### Employee Payslip
+
 - Semi-monthly payroll
 - Attendance-driven
 - Gross Income = Daily Rate × Days Worked
 
 Views:
+
 - `vw_employee_payslip`
 
 ---
 
 ### Payroll Summary
+
 - Monthly payroll period
 - Attendance-driven
 - Consolidated multi-employee reporting
 
 Views:
+
 - `vw_payroll_core`
 - `vw_payroll_summary`
 
@@ -95,6 +99,40 @@ Reference tables:
 - `payroll_period_config`
 
 This means payroll rules are not hardcoded in SQL views.
+
+---
+
+## Environment Setup
+
+This project uses environment variables for Python ETL database connectivity.
+
+Before running the ETL scripts, create a `.env` file in the project root based on `.env.example`.
+
+Example:
+
+```bash
+cp .env.example .env
+```
+
+Configure the following values based on your MySQL environment:
+
+```env
+DB_HOST=your_mysql_host
+DB_USER=your_mysql_user
+DB_PASSWORD=your_mysql_password
+DB_NAME=payrollsystem_db
+DB_PORT=3306
+```
+
+Example for local MySQL:
+
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=payrollsystem_db
+DB_PORT=3306
+```
 
 ---
 
