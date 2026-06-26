@@ -19,8 +19,12 @@ CREATE OR REPLACE VIEW vw_employee_payslip AS
 
 WITH payroll_period AS (
     SELECT
-        '2024-12-01' AS period_start,
-        '2024-12-15' AS period_end
+        period_start,
+        period_end
+    FROM payroll_period_config
+    WHERE period_type = 'PAYSLIP'
+      AND is_active = TRUE
+    LIMIT 1
 ),
 
 attendance_filtered AS (

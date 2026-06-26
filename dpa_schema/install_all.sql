@@ -1,0 +1,9 @@
+source dpa_schema/01_database.sql;
+source dpa_schema/02_lookup_tables.sql;
+source dpa_schema/03_employee_tables.sql;
+source dpa_schema/04_rbac_tables.sql;
+source dpa_schema/05_leave_tables.sql;
+source dpa_schema/06_attendance_tables.sql;
+source dpa_schema/07_payroll_tables.sql;
+source dpa_schema/08_indexes.sql;
+source dpa_schema/09_payroll_period_config.sql;

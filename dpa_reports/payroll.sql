@@ -1,0 +1,6 @@
+source dpa_reports/04_payroll_core_view.sql;
+source dpa_reports/05_payroll_summary_view.sql;
+source dpa_reports/06_payroll_summary_output.sql;
+source dpa_reports/07_payroll_summary_output_all.sql;
+source dpa_reports/08_payroll_validation_employee.sql;
+source dpa_reports/09_payroll_validation_summary.sql;

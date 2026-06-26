@@ -1,13 +1,8 @@
 -- =========================================
--- Module: Payroll Summary Procedure
--- File: 07_payroll_summary_test_all.sql
+-- Module: Payroll Summary Output Reporting
+-- File: 07_payroll_summary_output_all.sql
 -- Description:
--- Test script for sp_payroll_summary procedure
--- CONTAINS:
---   monthly run
---   bi-monthly run
---   single employee run
---   all employees run
+-- Generates a payroll summary report for all employees in the active payroll period
 -- =========================================
 
 USE payrollsystem_db;

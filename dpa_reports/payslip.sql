@@ -1,0 +1,3 @@
+source dpa_reports/01_employee_payslip_view.sql;
+source dpa_reports/02_employee_payslip_output.sql;
+source dpa_reports/03_employee_payslip_validation.sql;
