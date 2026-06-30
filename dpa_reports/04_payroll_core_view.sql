@@ -1,12 +1,26 @@
 -- =========================================
 -- Module: Payroll Summary Reporting
 -- File: 04_payroll_core_view.sql
+--
 -- Description:
--- Core payroll computation for all employees
--- Uses:
--- - Dynamic payroll period configuration
--- - Attendance-driven gross income
--- - Table-driven deductions
+-- Core monthly payroll computation for all employees.
+--
+-- Payroll Model:
+-- MotorPH has mixed employee types:
+-- - Regular employees
+-- - Probationary employees
+-- - Rank and File
+-- - Chiefs
+-- - Management
+--
+-- Payroll Assumptions:
+-- 1. Payroll summary is monthly.
+-- 2. Monthly salary uses 22 working days divisor.
+-- 3. Rank-and-file employees use attendance-based payroll.
+-- 4. Chiefs / Management use fixed monthly payroll.
+-- 5. Benefits are monthly.
+-- 6. Statutory deductions use monthly salary basis.
+-- 7. All benefits are treated as taxable compensation.
 -- =========================================
 
 USE payrollsystem_db;
@@ -32,13 +46,14 @@ attendance_filtered AS (
         ar.hours_worked
     FROM attendance_record ar
     JOIN payroll_period p
-        ON ar.attendance_date BETWEEN p.period_start AND p.period_end
+      ON ar.attendance_date BETWEEN p.period_start AND p.period_end
 ),
 
 payroll_base AS (
     SELECT
         e.employee_pk,
         e.employee_no,
+
         CONCAT(e.last_name, ', ', e.first_name) AS employee_name,
 
         e.sss_number,
@@ -62,14 +77,17 @@ payroll_base AS (
     CROSS JOIN payroll_period p
 
     JOIN employee_position ep
-        ON e.employee_pk = ep.employee_pk
+      ON e.employee_pk = ep.employee_pk
+     AND ep.end_date IS NULL
+
     JOIN job_position jp
-        ON ep.position_id = jp.position_id
+      ON ep.position_id = jp.position_id
+
     JOIN department d
-        ON ep.department_id = d.department_id
+      ON ep.department_id = d.department_id
 
     LEFT JOIN attendance_filtered a
-        ON e.employee_pk = a.employee_pk
+      ON e.employee_pk = a.employee_pk
 
     GROUP BY
         e.employee_pk,
@@ -91,7 +109,12 @@ calc AS (
     SELECT
         b.*,
 
-        ROUND(b.daily_rate * b.days_worked, 2) AS gross_income,
+        -- Gross Income (Hybrid Workforce Model)
+        CASE
+            WHEN b.position_name IN ('Chief', 'Manager', 'Management')
+                THEN ROUND(b.monthly_rate, 2)
+            ELSE ROUND(b.daily_rate * b.days_worked, 2)
+        END AS gross_income,
 
         ROUND(COALESCE(es.rice_subsidy, 0), 2) AS rice_subsidy,
         ROUND(COALESCE(es.phone_allowance, 0), 2) AS phone_allowance,
@@ -106,36 +129,63 @@ calc AS (
 
     FROM payroll_base b
     LEFT JOIN employee_staging es
-        ON es.employee_no = b.employee_no
+      ON es.employee_no = b.employee_no
 ),
 
 deductions AS (
     SELECT
         c.*,
 
-        ROUND(COALESCE((
-            SELECT contribution
-            FROM sss_contribution_bracket s
-            WHERE c.gross_income BETWEEN s.min_compensation AND s.max_compensation
-            LIMIT 1
-        ), 0), 2) AS sss_contribution,
+        -- SSS
+        ROUND(
+            COALESCE(
+                (
+                    SELECT contribution
+                    FROM sss_contribution_bracket s
+                    WHERE c.monthly_rate >= s.min_compensation
+                      AND c.monthly_rate < s.max_compensation
+                    LIMIT 1
+                ),
+                0
+            ),
+            2
+        ) AS sss_contribution,
 
-        ROUND(COALESCE((
-            SELECT c.gross_income * r.premium_rate * r.employee_share
-            FROM philhealth_contribution_rule r
-            WHERE c.gross_income BETWEEN r.min_salary AND r.max_salary
-            LIMIT 1
-        ), 0), 2) AS philhealth_contribution,
+        -- PhilHealth
+        ROUND(
+            COALESCE(
+                (
+                    SELECT ROUND(
+                        LEAST(
+                            GREATEST(c.monthly_rate, r.floor_amount),
+                            r.ceiling_amount
+                        ) * r.premium_rate * r.employee_share_rate,
+                        2
+                    )
+                    FROM philhealth_contribution_rule r
+                    WHERE r.rule_id = 1
+                ),
+                0
+            ),
+            2
+        ) AS philhealth_contribution,
 
-        ROUND(COALESCE((
-            SELECT LEAST(
-                c.gross_income * r.employee_rate,
-                r.max_contribution
-            )
-            FROM pagibig_contribution_rule r
-            WHERE c.gross_income BETWEEN r.min_salary AND r.max_salary
-            LIMIT 1
-        ), 0), 2) AS pagibig_contribution
+        -- Pag-IBIG
+        ROUND(
+            CASE
+                WHEN c.monthly_rate <= 1500 THEN
+                    LEAST(
+                        LEAST(c.monthly_rate, 10000) * 0.01,
+                        100
+                    )
+                ELSE
+                    LEAST(
+                        LEAST(c.monthly_rate, 10000) * 0.02,
+                        200
+                    )
+            END,
+            2
+        ) AS pagibig_contribution
 
     FROM calc c
 ),
@@ -145,34 +195,92 @@ tax_calc AS (
         d.*,
 
         ROUND(
-            gross_income + total_benefits
+            d.monthly_rate
+            + d.total_benefits
             - (
-                sss_contribution
-                + philhealth_contribution
-                + pagibig_contribution
+                d.sss_contribution
+                + d.philhealth_contribution
+                + d.pagibig_contribution
             ),
             2
         ) AS taxable_income
 
     FROM deductions d
+),
+
+final_tax AS (
+    SELECT
+        t.*,
+
+        ROUND(
+            COALESCE(
+                (
+                    SELECT
+                        w.base_tax +
+                        (
+                            (t.taxable_income - w.min_salary)
+                            * w.excess_rate
+                        )
+                    FROM withholding_tax_bracket w
+                    WHERE t.taxable_income >= w.min_salary
+                      AND (
+                            t.taxable_income <= w.max_salary
+                            OR w.max_salary IS NULL
+                      )
+                    ORDER BY w.min_salary DESC
+                    LIMIT 1
+                ),
+                0
+            ),
+            2
+        ) AS withholding_tax
+
+    FROM tax_calc t
 )
 
 SELECT
-    t.*,
+    employee_pk,
+    employee_no,
+    employee_name,
 
-    ROUND(COALESCE((
-        SELECT
-            w.base_tax +
-            ((t.taxable_income - w.min_salary) * w.excess_rate)
-        FROM withholding_tax_bracket w
-        WHERE t.taxable_income >= w.min_salary
-          AND (
-                t.taxable_income <= w.max_salary
-                OR w.max_salary IS NULL
-          )
-        ORDER BY w.min_salary DESC
-        LIMIT 1
-    ), 0), 2) AS withholding_tax,
+    sss_number,
+    philhealth_number,
+    pagibig_number,
+    tin_number,
+
+    department_name,
+    position_name,
+
+    period_start,
+    period_end,
+
+    monthly_rate,
+    daily_rate,
+
+    days_worked,
+    total_hours_worked,
+
+    gross_income,
+
+    rice_subsidy,
+    phone_allowance,
+    clothing_allowance,
+    total_benefits,
+
+    sss_contribution,
+    philhealth_contribution,
+    pagibig_contribution,
+
+    taxable_income,
+    withholding_tax,
+
+    ROUND(
+        sss_contribution
+        + philhealth_contribution
+        + pagibig_contribution
+        + withholding_tax,
+        2
+    ) AS total_deductions,
 
     ROUND(
         (gross_income + total_benefits)
@@ -181,21 +289,9 @@ SELECT
             sss_contribution
             + philhealth_contribution
             + pagibig_contribution
-            + COALESCE((
-                SELECT
-                    w.base_tax +
-                    ((t.taxable_income - w.min_salary) * w.excess_rate)
-                FROM withholding_tax_bracket w
-                WHERE t.taxable_income >= w.min_salary
-                  AND (
-                        t.taxable_income <= w.max_salary
-                        OR w.max_salary IS NULL
-                  )
-                ORDER BY w.min_salary DESC
-                LIMIT 1
-            ), 0)
+            + withholding_tax
         ),
         2
     ) AS net_pay
 
-FROM tax_calc t;
+FROM final_tax;

@@ -1,14 +1,18 @@
 -- =========================================
--- Module: Employee Payslip Reporting (FINAL)
+-- Module: Employee Payslip Reporting (FINAL REVISED)
 -- File: 01_employee_payslip_view.sql
+--
 -- Description:
--- Generates a bi-monthly employee payslip using:
--- - Employee master data
--- - Position + department tables
--- - Attendance records
--- - Employee allowances (staging)
--- - Table-driven statutory deductions
--- - Course-based withholding tax brackets
+-- Generates a semi-monthly employee payslip for MotorPH.
+--
+-- Payroll Assumptions:
+-- 1. Monthly salary uses 22 working days divisor.
+-- 2. Rank-and-file employees use attendance-based payroll.
+-- 3. Chiefs / Management use fixed semi-monthly payroll.
+-- 4. Benefits are split equally per cutoff.
+-- 5. Statutory deductions use monthly salary basis.
+-- 6. Monthly deductions are allocated semi-monthly.
+-- 7. All benefits are treated as taxable compensation.
 -- =========================================
 
 USE payrollsystem_db;
@@ -18,9 +22,7 @@ DROP VIEW IF EXISTS vw_employee_payslip;
 CREATE OR REPLACE VIEW vw_employee_payslip AS
 
 WITH payroll_period AS (
-    SELECT
-        period_start,
-        period_end
+    SELECT period_start, period_end
     FROM payroll_period_config
     WHERE period_type = 'PAYSLIP'
       AND is_active = TRUE
@@ -60,8 +62,11 @@ payroll_base AS (
 
     JOIN employee_position ep
         ON e.employee_pk = ep.employee_pk
+       AND ep.end_date IS NULL
+
     JOIN job_position jp
         ON ep.position_id = jp.position_id
+
     JOIN department d
         ON ep.department_id = d.department_id
 
@@ -84,50 +89,91 @@ calc AS (
     SELECT
         b.*,
 
-        ROUND(b.daily_rate * b.days_worked, 2) AS gross_income,
+        -- Gross Income (Mixed Workforce Model)
+        CASE
+            WHEN b.position_name IN ('Chief', 'Manager', 'Management')
+                THEN ROUND(b.monthly_rate / 2, 2)
+            ELSE ROUND(b.daily_rate * b.days_worked, 2)
+        END AS gross_income,
 
+        -- Semi-monthly benefits
         ROUND(COALESCE(es.rice_subsidy, 0) / 2, 2) AS rice_subsidy,
         ROUND(COALESCE(es.phone_allowance, 0) / 2, 2) AS phone_allowance,
         ROUND(COALESCE(es.clothing_allowance, 0) / 2, 2) AS clothing_allowance,
 
         ROUND(
-            ROUND(COALESCE(es.rice_subsidy, 0) / 2, 2)
-            + ROUND(COALESCE(es.phone_allowance, 0) / 2, 2)
-            + ROUND(COALESCE(es.clothing_allowance, 0) / 2, 2),
+            COALESCE(es.rice_subsidy, 0)
+            + COALESCE(es.phone_allowance, 0)
+            + COALESCE(es.clothing_allowance, 0),
+            2
+        ) AS monthly_benefits,
+
+        ROUND(
+            (
+                COALESCE(es.rice_subsidy, 0)
+                + COALESCE(es.phone_allowance, 0)
+                + COALESCE(es.clothing_allowance, 0)
+            ) / 2,
             2
         ) AS total_benefits,
 
-        ROUND(COALESCE((
-            SELECT contribution
-            FROM sss_contribution_bracket s
-            WHERE (b.daily_rate * b.days_worked)
-                  BETWEEN s.min_compensation AND s.max_compensation
-            LIMIT 1
-        ), 0), 2) AS sss,
+        -- SSS (Monthly Basis / 2)
+        ROUND(
+            COALESCE(
+                (
+                    SELECT contribution / 2
+                    FROM sss_contribution_bracket s
+                    WHERE b.monthly_rate >= s.min_compensation
+                      AND b.monthly_rate < s.max_compensation
+                    LIMIT 1
+                ),
+                0
+            ),
+            2
+        ) AS sss,
 
-        ROUND(COALESCE((
-            SELECT ROUND(
-                (b.daily_rate * b.days_worked)
-                * r.premium_rate
-                * r.employee_share,
-                2
-            )
-            FROM philhealth_contribution_rule r
-            WHERE (b.daily_rate * b.days_worked)
-                  BETWEEN r.min_salary AND r.max_salary
-            LIMIT 1
-        ), 0), 2) AS philhealth,
+        -- PhilHealth (Monthly Basis / 2)
+        ROUND(
+            COALESCE(
+                (
+                    SELECT ROUND(
+                        (
+                            LEAST(
+                                GREATEST(
+                                    b.monthly_rate,
+                                    r.floor_amount
+                                ),
+                                r.ceiling_amount
+                            )
+                            * r.premium_rate
+                            * r.employee_share_rate
+                        ) / 2,
+                        2
+                    )
+                    FROM philhealth_contribution_rule r
+                    WHERE r.rule_id = 1
+                ),
+                0
+            ),
+            2
+        ) AS philhealth,
 
-        ROUND(COALESCE((
-            SELECT LEAST(
-                (b.daily_rate * b.days_worked) * r.employee_rate,
-                r.max_contribution
-            )
-            FROM pagibig_contribution_rule r
-            WHERE (b.daily_rate * b.days_worked)
-                  BETWEEN r.min_salary AND r.max_salary
-            LIMIT 1
-        ), 0), 2) AS pagibig
+        -- Pag-IBIG (Monthly Basis / 2)
+        ROUND(
+            CASE
+                WHEN b.monthly_rate <= 1500 THEN
+                    LEAST(
+                        LEAST(b.monthly_rate, 10000) * 0.01,
+                        100
+                    ) / 2
+                ELSE
+                    LEAST(
+                        LEAST(b.monthly_rate, 10000) * 0.02,
+                        200
+                    ) / 2
+            END,
+            2
+        ) AS pagibig
 
     FROM payroll_base b
     LEFT JOIN employee_staging es
@@ -137,12 +183,14 @@ calc AS (
 tax AS (
     SELECT
         c.*,
+
         ROUND(
-            gross_income
-            + total_benefits
-            - (sss + philhealth + pagibig),
+            c.monthly_rate
+            + c.monthly_benefits
+            - ((c.sss + c.philhealth + c.pagibig) * 2),
             2
-        ) AS taxable_income
+        ) AS monthly_taxable_income
+
     FROM calc c
 ),
 
@@ -150,19 +198,30 @@ final AS (
     SELECT
         t.*,
 
-        ROUND(COALESCE((
-            SELECT
-                w.base_tax +
-                ((t.taxable_income - w.min_salary) * w.excess_rate)
-            FROM withholding_tax_bracket w
-            WHERE t.taxable_income >= w.min_salary
-              AND (
-                  t.taxable_income <= w.max_salary
-                  OR w.max_salary IS NULL
-              )
-            ORDER BY w.min_salary DESC
-            LIMIT 1
-        ), 0), 2) AS withholding_tax
+        ROUND(
+            COALESCE(
+                (
+                    SELECT
+                        (
+                            w.base_tax
+                            + (
+                                (t.monthly_taxable_income - w.min_salary)
+                                * w.excess_rate
+                            )
+                        ) / 2
+                    FROM withholding_tax_bracket w
+                    WHERE t.monthly_taxable_income >= w.min_salary
+                      AND (
+                          t.monthly_taxable_income <= w.max_salary
+                          OR w.max_salary IS NULL
+                      )
+                    ORDER BY w.min_salary DESC
+                    LIMIT 1
+                ),
+                0
+            ),
+            2
+        ) AS withholding_tax
 
     FROM tax t
 )
@@ -193,7 +252,7 @@ SELECT
     philhealth,
     pagibig,
 
-    taxable_income,
+    monthly_taxable_income,
     withholding_tax,
 
     ROUND(

@@ -66,31 +66,29 @@ VALUES
 DROP TABLE IF EXISTS philhealth_contribution_rule;
 
 CREATE TABLE philhealth_contribution_rule (
-    rule_id INT AUTO_INCREMENT PRIMARY KEY,
-    min_salary DECIMAL(10,2),
-    max_salary DECIMAL(10,2),
-    premium_rate DECIMAL(5,2),
-    employee_share DECIMAL(5,2)
+    rule_id INT PRIMARY KEY,
+    floor_amount DECIMAL(10,2),    -- e.g., 10,000.00
+    ceiling_amount DECIMAL(10,2),  -- e.g., 60,000.00
+    premium_rate DECIMAL(5,4),     -- 0.0300
+    employee_share_rate DECIMAL(5,2) -- 0.50
 );
 
-INSERT INTO philhealth_contribution_rule VALUES
-(1, 0, 9999999, 0.03, 0.50);
+INSERT INTO philhealth_contribution_rule VALUES (1, 10000.00, 60000.00, 0.03, 0.50);
 
 -- =========================================
 -- PAG-IBIG RULE
 -- =========================================
+
 DROP TABLE IF EXISTS pagibig_contribution_rule;
 
 CREATE TABLE pagibig_contribution_rule (
-    rule_id INT AUTO_INCREMENT PRIMARY KEY,
-    min_salary DECIMAL(10,2),
-    max_salary DECIMAL(10,2),
-    employee_rate DECIMAL(5,2),
-    employer_rate DECIMAL(5,2),
-    max_contribution DECIMAL(10,2)
+    rule_id INT PRIMARY KEY,
+    salary_threshold DECIMAL(10,2), -- 1500.00
+    employee_rate DECIMAL(5,4),     -- 0.01 or 0.02
+    employer_rate DECIMAL(5,4),     -- 0.02
+    max_fund_salary DECIMAL(10,2)   -- 10000.00
 );
 
-INSERT INTO pagibig_contribution_rule (min_salary, max_salary, employee_rate, employer_rate, max_contribution)
-VALUES
-(0, 1500, 0.01, 0.02, 100),
-(1500.01, 9999999, 0.02, 0.02, 100);
+INSERT INTO pagibig_contribution_rule VALUES 
+(1, 1500.00, 0.01, 0.02, 10000.00),
+(2, 9999999.00, 0.02, 0.02, 10000.00);
