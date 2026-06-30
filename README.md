@@ -206,12 +206,9 @@ python python/transform_attendance.py
 
 [![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1-UQy6mNv8gnuQ6THULgak478L1xH0Orf)](https://drive.google.com/file/d/1-UQy6mNv8gnuQ6THULgak478L1xH0Orf/view?usp=sharing)
 
-
 [![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1fRvgoRw0QeiF3YzjbobVBd8vvnA6e6l9)](https://drive.google.com/file/d/1fRvgoRw0QeiF3YzjbobVBd8vvnA6e6l9/view?usp=sharing)
 
 #### Payslip View with Validation (Nov. 16-30, 2024, Second Cut-Off)
-
-[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h)](https://drive.google.com/file/d/1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h/view?usp=sharing)
 
 [![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h)](https://drive.google.com/file/d/1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h/view?usp=sharing)
 
@@ -225,6 +222,14 @@ python python/transform_attendance.py
 \source dpa_reports/payroll.sql
 ```
 
+### Snapshots
+
+#### Payroll View with Validation (November 2024)
+
+[![Payroll View with Validation](https://drive.google.com/uc?export=view&id=1fewnw0_fOdXJNMrKqeBPXT-h-cqmZlWe)](https://drive.google.com/file/d/1fewnw0_fOdXJNMrKqeBPXT-h-cqmZlWe/view?usp=sharing)
+
+[![Payroll View](https://drive.google.com/uc?export=view&id=1Cp3rrFsXieV17N42jQv-KsLxZmZn0UlK)](https://drive.google.com/file/d/1Cp3rrFsXieV17N42jQv-KsLxZmZn0UlK/view?usp=sharing)
+
 ---
 
 ## 8. Changing Payslip Cut-Off and Monthly Payroll Period
@@ -236,6 +241,12 @@ source dpa_reports/change_cutoff.sql
 -- # payroll period change by month and year
 source dpa_reports/change_payroll_month.sql
 ```
+
+### Snapshot
+
+[![Payroll Change](https://drive.google.com/uc?export=view&id=1FYBvCix7PHKUlj0JBG3Q-NZ4_PnjP15S)](https://drive.google.com/file/d/1FYBvCix7PHKUlj0JBG3Q-NZ4_PnjP15S/view?usp=sharing)
+
+[![Payroll Change to Decemver 2025](https://drive.google.com/uc?export=view&id=1ZqRaGD92IVSSCoYu07rBXG9WrDV0m4zy)](https://drive.google.com/file/d/1ZqRaGD92IVSSCoYu07rBXG9WrDV0m4zy/view?usp=sharing)
 
 ---
 
@@ -257,6 +268,22 @@ NET PAY VALIDATION      PASS
 DEDUCTIONS VALIDATION   PASS
 NON-NEGATIVE VALIDATION PASS
 ```
+
+### Sample Snaphots
+
+#### Payslip Validation (November 1-15, 2024, First Cut-Off)
+
+[![Payslip Validation First Cut-Off](https://drive.google.com/uc?export=view&id=1GLRP1tc6HFpbb_il089NnMLNVJEuGc5_)](https://drive.google.com/file/d/1GLRP1tc6HFpbb_il089NnMLNVJEuGc5_/view?usp=sharing)
+
+#### Payslip Validation (November 16-30, 2024, Second Cut-Off)
+
+[![Payslip Validation Second Cut-Off](https://drive.google.com/uc?export=view&id=16Ot8D0zxvVPqGZHQTLvA2Jy6ihCbGlrM)](https://drive.google.com/file/d/16Ot8D0zxvVPqGZHQTLvA2Jy6ihCbGlrM/view?usp=sharing)
+
+#### Payroll Validation (November 2024)
+
+[![Payroll Summary Validation](https://drive.google.com/uc?export=view&id=1uKnwaUJpSLDCrNqODamI_8AGOI1hk0X-)](https://drive.google.com/file/d/1uKnwaUJpSLDCrNqODamI_8AGOI1hk0X-/view?usp=sharing)
+
+[![Payroll Totals Validation](https://drive.google.com/uc?export=view&id=1KxEjCfrZawUGBYOJNNwWEDhsyGojPm-y)](https://drive.google.com/file/d/1KxEjCfrZawUGBYOJNNwWEDhsyGojPm-y/view?usp=sharing)
 
 ---
 
