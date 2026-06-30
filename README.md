@@ -26,7 +26,7 @@ Because of this, the project is delivered as a modular SQL + Python pipeline.
 - MySQL
 - mysqlsh
 - Python
-- DBeaver
+- DBeaver/MYSQL Workbench
 - Aiven Cloud MySQL
 
 ---
@@ -199,6 +199,23 @@ python python/transform_attendance.py
 ```sh
 \source dpa_reports/payslip.sql
 ```
+
+### Snapshots
+
+#### Payslip View with Validation (Nov. 1-15, 2024, First Cut-Off)
+
+[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1-UQy6mNv8gnuQ6THULgak478L1xH0Orf)](https://drive.google.com/file/d/1-UQy6mNv8gnuQ6THULgak478L1xH0Orf/view?usp=sharing)
+
+
+[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1fRvgoRw0QeiF3YzjbobVBd8vvnA6e6l9)](https://drive.google.com/file/d/1fRvgoRw0QeiF3YzjbobVBd8vvnA6e6l9/view?usp=sharing)
+
+#### Payslip View with Validation (Nov. 16-30, 2024, Second Cut-Off)
+
+[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h)](https://drive.google.com/file/d/1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h/view?usp=sharing)
+
+[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h)](https://drive.google.com/file/d/1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h/view?usp=sharing)
+
+[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=10Y7K2GO1kmCAR0My7CNVQPqB0odNNmIC)](https://drive.google.com/file/d/10Y7K2GO1kmCAR0My7CNVQPqB0odNNmIC/view?usp=sharing)
 
 ---
 
