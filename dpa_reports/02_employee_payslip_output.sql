@@ -3,6 +3,7 @@ SELECT
     employee_name AS `EMPLOYEE NAME`,
     CONCAT(position_name, ' / ', department_name) AS `EMPLOYEE POSITION/DEPARTMENT`,
 
+    period_name AS `PAYROLL PERIOD  `,
     period_start AS `PERIOD START DATE`,
     period_end AS `PERIOD END DATE`,
 

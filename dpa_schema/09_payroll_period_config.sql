@@ -1,10 +1,21 @@
 -- =========================================
--- Module: Payroll Period Config
+-- Module: Payroll Period Configuration
 -- File: 09_payroll_period_config.sql
+--
 -- Description:
--- Stores active payroll periods used by:
+-- Stores the active payroll period configuration
+-- used by payroll-related reports.
+--
+-- Supported Modules:
 -- - Employee Payslip Reporting (bi-monthly)
 -- - Payroll Summary Reporting (monthly)
+--
+-- Business Rules:
+-- - Only one active PAYSLIP period should exist.
+-- - Only one active PAYROLL period should exist.
+-- - Reports automatically read the active period.
+-- - Updating this table changes report periods
+--   without modifying SQL views or procedures.
 -- =========================================
 
 USE payrollsystem_db;
@@ -34,19 +45,17 @@ INSERT INTO payroll_period_config (
     is_active
 )
 VALUES
-
 (
     'PAYSLIP',
-    'December 2024 First Cutoff',
-    '2024-12-01',
-    '2024-12-15',
+    'November 2024 First Cutoff',
+    '2024-11-01',
+    '2024-11-15',
     TRUE
 ),
-
 (
     'PAYROLL',
-    'December 2024 Monthly Payroll',
-    '2024-12-01',
-    '2024-12-31',
+    'November 2024 Monthly Payroll',
+    '2024-11-01',
+    '2024-11-30',
     TRUE
 );

@@ -21,8 +21,9 @@ DROP VIEW IF EXISTS vw_employee_payslip;
 
 CREATE OR REPLACE VIEW vw_employee_payslip AS
 
+
 WITH payroll_period AS (
-    SELECT period_start, period_end
+    SELECT period_name, period_start, period_end
     FROM payroll_period_config
     WHERE period_type = 'PAYSLIP'
       AND is_active = TRUE
@@ -48,6 +49,7 @@ payroll_base AS (
         d.department_name,
         jp.position_name,
 
+        p.period_name,
         p.period_start,
         p.period_end,
 
@@ -81,6 +83,7 @@ payroll_base AS (
         d.department_name,
         jp.position_name,
         ep.basic_salary,
+        p.period_name,
         p.period_start,
         p.period_end
 ),
@@ -89,77 +92,84 @@ calc AS (
     SELECT
         b.*,
 
-        -- Gross Income (Mixed Workforce Model)
-        CASE
-            WHEN b.position_name IN ('Chief', 'Manager', 'Management')
-                THEN ROUND(b.monthly_rate / 2, 2)
-            ELSE ROUND(b.daily_rate * b.days_worked, 2)
-        END AS gross_income,
+-- Gross Income (Mixed Workforce Model)
+CASE
+    WHEN b.position_name IN (
+        'Chief',
+        'Manager',
+        'Management'
+    ) THEN ROUND(b.monthly_rate / 2, 2)
+    ELSE ROUND(
+        b.daily_rate * b.days_worked,
+        2
+    )
+END AS gross_income,
 
-        -- Semi-monthly benefits
-        ROUND(COALESCE(es.rice_subsidy, 0) / 2, 2) AS rice_subsidy,
-        ROUND(COALESCE(es.phone_allowance, 0) / 2, 2) AS phone_allowance,
-        ROUND(COALESCE(es.clothing_allowance, 0) / 2, 2) AS clothing_allowance,
+-- Semi-monthly benefits
+ROUND(
+    COALESCE(es.rice_subsidy, 0) / 2,
+    2
+) AS rice_subsidy,
+ROUND(
+    COALESCE(es.phone_allowance, 0) / 2,
+    2
+) AS phone_allowance,
+ROUND(
+    COALESCE(es.clothing_allowance, 0) / 2,
+    2
+) AS clothing_allowance,
+ROUND(
+    COALESCE(es.rice_subsidy, 0) + COALESCE(es.phone_allowance, 0) + COALESCE(es.clothing_allowance, 0),
+    2
+) AS monthly_benefits,
+ROUND(
+    (
+        COALESCE(es.rice_subsidy, 0) + COALESCE(es.phone_allowance, 0) + COALESCE(es.clothing_allowance, 0)
+    ) / 2,
+    2
+) AS total_benefits,
 
-        ROUND(
-            COALESCE(es.rice_subsidy, 0)
-            + COALESCE(es.phone_allowance, 0)
-            + COALESCE(es.clothing_allowance, 0),
-            2
-        ) AS monthly_benefits,
+-- SSS (Monthly Basis / 2)
+ROUND(
+    COALESCE(
+        (
+            SELECT contribution / 2
+            FROM sss_contribution_bracket s
+            WHERE
+                b.monthly_rate >= s.min_compensation
+                AND b.monthly_rate < s.max_compensation
+            LIMIT 1
+        ),
+        0
+    ),
+    2
+) AS sss,
 
-        ROUND(
-            (
-                COALESCE(es.rice_subsidy, 0)
-                + COALESCE(es.phone_allowance, 0)
-                + COALESCE(es.clothing_allowance, 0)
-            ) / 2,
-            2
-        ) AS total_benefits,
+-- PhilHealth (Monthly Basis / 2)
+ROUND(
+    COALESCE(
+        (
+            SELECT ROUND(
+                    (
+                        LEAST(
+                            GREATEST(
+                                b.monthly_rate, r.floor_amount
+                            ), r.ceiling_amount
+                        ) * r.premium_rate * r.employee_share_rate
+                    ) / 2, 2
+                )
+            FROM philhealth_contribution_rule r
+            WHERE
+                r.rule_id = 1
+        ),
+        0
+    ),
+    2
+) AS philhealth,
 
-        -- SSS (Monthly Basis / 2)
-        ROUND(
-            COALESCE(
-                (
-                    SELECT contribution / 2
-                    FROM sss_contribution_bracket s
-                    WHERE b.monthly_rate >= s.min_compensation
-                      AND b.monthly_rate < s.max_compensation
-                    LIMIT 1
-                ),
-                0
-            ),
-            2
-        ) AS sss,
+-- Pag-IBIG (Monthly Basis / 2)
 
-        -- PhilHealth (Monthly Basis / 2)
-        ROUND(
-            COALESCE(
-                (
-                    SELECT ROUND(
-                        (
-                            LEAST(
-                                GREATEST(
-                                    b.monthly_rate,
-                                    r.floor_amount
-                                ),
-                                r.ceiling_amount
-                            )
-                            * r.premium_rate
-                            * r.employee_share_rate
-                        ) / 2,
-                        2
-                    )
-                    FROM philhealth_contribution_rule r
-                    WHERE r.rule_id = 1
-                ),
-                0
-            ),
-            2
-        ) AS philhealth,
-
-        -- Pag-IBIG (Monthly Basis / 2)
-        ROUND(
+ROUND(
             CASE
                 WHEN b.monthly_rate <= 1500 THEN
                     LEAST(
@@ -231,39 +241,31 @@ SELECT
     employee_name,
     department_name,
     position_name,
-
+    period_name,
     period_start,
     period_end,
-
     monthly_rate,
     daily_rate,
-
     days_worked,
     total_hours_worked,
-
     gross_income,
-
     rice_subsidy,
     phone_allowance,
     clothing_allowance,
     total_benefits,
-
     sss,
     philhealth,
     pagibig,
-
     monthly_taxable_income,
     withholding_tax,
-
     ROUND(
         sss + philhealth + pagibig + withholding_tax,
         2
     ) AS total_deductions,
-
     ROUND(
-        (gross_income + total_benefits)
-        - (sss + philhealth + pagibig + withholding_tax),
+        (gross_income + total_benefits) - (
+            sss + philhealth + pagibig + withholding_tax
+        ),
         2
     ) AS take_home_pay
-
 FROM final;

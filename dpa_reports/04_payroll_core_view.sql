@@ -29,8 +29,10 @@ DROP VIEW IF EXISTS vw_payroll_core;
 
 CREATE OR REPLACE VIEW vw_payroll_core AS
 
+
 WITH payroll_period AS (
     SELECT
+        period_name,
         period_start,
         period_end
     FROM payroll_period_config
@@ -64,6 +66,7 @@ payroll_base AS (
         d.department_name,
         jp.position_name,
 
+        p.period_name,
         p.period_start,
         p.period_end,
 
@@ -100,17 +103,16 @@ payroll_base AS (
         e.tin_number,
         d.department_name,
         jp.position_name,
+        p.period_name,
         p.period_start,
         p.period_end,
         ep.basic_salary
-),
 
-calc AS (
-    SELECT
-        b.*,
+), calc AS ( SELECT b.*,
 
-        -- Gross Income (Hybrid Workforce Model)
-        CASE
+-- Gross Income (Hybrid Workforce Model)
+
+CASE
             WHEN b.position_name IN ('Chief', 'Manager', 'Management')
                 THEN ROUND(b.monthly_rate, 2)
             ELSE ROUND(b.daily_rate * b.days_worked, 2)
@@ -136,42 +138,45 @@ deductions AS (
     SELECT
         c.*,
 
-        -- SSS
-        ROUND(
-            COALESCE(
-                (
-                    SELECT contribution
-                    FROM sss_contribution_bracket s
-                    WHERE c.monthly_rate >= s.min_compensation
-                      AND c.monthly_rate < s.max_compensation
-                    LIMIT 1
-                ),
-                0
-            ),
-            2
-        ) AS sss_contribution,
+-- SSS
+ROUND(
+    COALESCE(
+        (
+            SELECT contribution
+            FROM sss_contribution_bracket s
+            WHERE
+                c.monthly_rate >= s.min_compensation
+                AND c.monthly_rate < s.max_compensation
+            LIMIT 1
+        ),
+        0
+    ),
+    2
+) AS sss_contribution,
 
-        -- PhilHealth
-        ROUND(
-            COALESCE(
-                (
-                    SELECT ROUND(
-                        LEAST(
-                            GREATEST(c.monthly_rate, r.floor_amount),
-                            r.ceiling_amount
-                        ) * r.premium_rate * r.employee_share_rate,
-                        2
-                    )
-                    FROM philhealth_contribution_rule r
-                    WHERE r.rule_id = 1
-                ),
-                0
-            ),
-            2
-        ) AS philhealth_contribution,
+-- PhilHealth
+ROUND(
+    COALESCE(
+        (
+            SELECT ROUND(
+                    LEAST(
+                        GREATEST(
+                            c.monthly_rate, r.floor_amount
+                        ), r.ceiling_amount
+                    ) * r.premium_rate * r.employee_share_rate, 2
+                )
+            FROM philhealth_contribution_rule r
+            WHERE
+                r.rule_id = 1
+        ),
+        0
+    ),
+    2
+) AS philhealth_contribution,
 
-        -- Pag-IBIG
-        ROUND(
+-- Pag-IBIG
+
+ROUND(
             CASE
                 WHEN c.monthly_rate <= 1500 THEN
                     LEAST(
@@ -242,56 +247,37 @@ SELECT
     employee_pk,
     employee_no,
     employee_name,
-
     sss_number,
     philhealth_number,
     pagibig_number,
     tin_number,
-
     department_name,
     position_name,
-
+    period_name,
     period_start,
     period_end,
-
     monthly_rate,
     daily_rate,
-
     days_worked,
     total_hours_worked,
-
     gross_income,
-
     rice_subsidy,
     phone_allowance,
     clothing_allowance,
     total_benefits,
-
     sss_contribution,
     philhealth_contribution,
     pagibig_contribution,
-
     taxable_income,
     withholding_tax,
-
     ROUND(
-        sss_contribution
-        + philhealth_contribution
-        + pagibig_contribution
-        + withholding_tax,
+        sss_contribution + philhealth_contribution + pagibig_contribution + withholding_tax,
         2
     ) AS total_deductions,
-
     ROUND(
-        (gross_income + total_benefits)
-        -
-        (
-            sss_contribution
-            + philhealth_contribution
-            + pagibig_contribution
-            + withholding_tax
+        (gross_income + total_benefits) - (
+            sss_contribution + philhealth_contribution + pagibig_contribution + withholding_tax
         ),
         2
     ) AS net_pay
-
 FROM final_tax;

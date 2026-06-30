@@ -24,8 +24,12 @@ CREATE OR REPLACE VIEW vw_payroll_summary AS
 SELECT
     employee_no,
     employee_name,
+
+    period_name,
+
     position_name,
     department_name,
+
     gross_income,
 
     sss_number,

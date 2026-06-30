@@ -10,6 +10,7 @@ USE payrollsystem_db;
 SELECT
     employee_no AS `Employee No`,
     employee_name AS `Employee Full Name`,
+    period_name AS `Payroll Period`,
     position_name AS `Position`,
     department_name AS `Department`,
     gross_income AS `Gross Income`,
@@ -26,6 +27,7 @@ FROM (
     SELECT
         employee_no,
         employee_name,
+        period_name,
         position_name,
         department_name,
         gross_income,
@@ -47,6 +49,7 @@ FROM (
 
     SELECT
         'TOTAL',
+        '',
         '',
         '',
         '',
