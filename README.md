@@ -138,7 +138,7 @@ DB_PORT=3306
 
 # Setup and Execution
 
-> Important: Execute SQL scripts using mysqlsh (SQL mode) from the project root directory so relative paths work correctly.
+> Important: Execute SQL scripts using mysqlsh (SQL mode) from the project root directory so relative paths work correctly. Commands are case sensitive
 
 ## 1. Schema Setup
 
@@ -169,6 +169,7 @@ DB_PORT=3306
 Install requirements:
 
 ```bash
+# be sure to activate your Python virtual environment before installation
 pip install -r requirements.txt
 ```
 
@@ -193,7 +194,7 @@ python python/transform_attendance.py
 
 ---
 
-## 6. Payslip Report
+## 6. Payslip Report with Validation
 
 ```sh
 \source dpa_reports/payslip.sql
@@ -201,10 +202,22 @@ python python/transform_attendance.py
 
 ---
 
-## 7. Payroll Summary Report
+## 7. Payroll Summary Report with Validation
 
 ```sh
 \source dpa_reports/payroll.sql
+```
+
+---
+
+## 8. Changing Payslip Cut-Off and Monthly Payroll Period
+
+```sql
+-- # cut-off change
+source dpa_reports/change_cutoff.sql
+
+-- # payroll period change by month and year
+source dpa_reports/change_payroll_month.sql
 ```
 
 ---
@@ -229,6 +242,412 @@ NON-NEGATIVE VALIDATION PASS
 ```
 
 ---
+
+# HRIS & Payroll System Business Logic
+
+## Overview
+
+The MotorPH HRIS & Payroll System is a database-driven payroll reporting system built using MySQL and Python ETL.
+
+The system generates two main payroll reports:
+
+- Employee Payslip Report (Semi-Monthly)
+- Payroll Summary Report (Monthly)
+
+Payroll computation is configuration-driven using database tables for payroll periods, statutory deductions, and withholding tax rules.
+
+---
+
+## Payroll Processing Flow
+
+```text
+Source Data
+→ Staging Tables
+→ Python ETL
+→ Production Database
+→ Payroll Views
+→ Validation Scripts
+```
+
+---
+
+## Payroll Model
+
+MotorPH uses an **attendance-driven payroll model** for all employees regardless of:
+
+- Employment Type (Regular / Probationary)
+- Position Level (Rank-and-File / Chief / Management)
+
+All payroll computations are based on actual attendance records within the configured payroll period.
+
+---
+
+## Salary Basis
+
+### Monthly Rate
+
+Monthly rate refers to the employee’s official base salary stored in:
+
+- `employee_position.basic_salary`
+
+Formula:
+
+```text
+Monthly Rate = Basic Salary
+```
+
+---
+
+### Daily Rate
+
+Daily rate is derived using a fixed 22-working-day divisor.
+
+Formula:
+
+```text
+Daily Rate = Monthly Rate / 22
+```
+
+Example:
+
+```text
+Monthly Rate = 22,000
+Daily Rate = 22,000 / 22 = 1,000
+```
+
+---
+
+## Employee Payslip Computation (Semi-Monthly)
+
+Payslip payroll periods are configured in:
+
+- `payroll_period_config`
+
+where:
+
+- `period_type = 'PAYSLIP'`
+
+---
+
+### Gross Income
+
+Gross income is computed using attendance.
+
+Formula:
+
+```text
+Gross Income = Daily Rate × Days Worked
+```
+
+Example:
+
+```text
+Daily Rate = 1,000
+Days Worked = 10
+Gross Income = 10,000
+```
+
+---
+
+## Benefits and Allowances
+
+The system supports three employee allowances:
+
+- Rice Subsidy
+- Phone Allowance
+- Clothing Allowance
+
+---
+
+### Monthly Benefits
+
+Formula:
+
+```text
+Monthly Benefits =
+Rice Subsidy
++ Phone Allowance
++ Clothing Allowance
+```
+
+---
+
+### Semi-Monthly Benefits
+
+Benefits are distributed equally per cutoff.
+
+Formula:
+
+```text
+Semi-Monthly Benefits = Monthly Benefits / 2
+```
+
+---
+
+## Statutory Deductions
+
+Statutory deductions are computed using database-driven configuration tables:
+
+- `sss_contribution_bracket`
+- `philhealth_contribution_rule`
+- `pagibig_contribution_rule`
+
+These deductions use the employee’s monthly salary as basis.
+
+---
+
+### SSS Contribution
+
+SSS contribution is determined using salary bracket lookup.
+
+For payslip:
+
+```text
+Semi-Monthly SSS = Monthly SSS / 2
+```
+
+---
+
+### PhilHealth Contribution
+
+PhilHealth is computed using:
+
+- salary floor
+- salary ceiling
+- premium rate
+- employee share rate
+
+Formula:
+
+```text
+PhilHealth =
+Salary Basis × Premium Rate × Employee Share
+```
+
+For payslip:
+
+```text
+Semi-Monthly PhilHealth = Monthly PhilHealth / 2
+```
+
+---
+
+### Pag-IBIG Contribution
+
+Pag-IBIG contribution is salary-based.
+
+Rules:
+
+- Salary ≤ 1,500 → 1%
+- Salary > 1,500 → 2%
+
+Formula:
+
+```text
+Pag-IBIG = Salary Basis × Employee Rate
+```
+
+For payslip:
+
+```text
+Semi-Monthly Pag-IBIG = Monthly Pag-IBIG / 2
+```
+
+---
+
+## Taxable Income
+
+Taxable income is used as the basis for withholding tax computation.
+
+Formula:
+
+```text
+Monthly Taxable Income =
+Monthly Rate
++ Monthly Benefits
+− Monthly Statutory Deductions
+```
+
+---
+
+## Withholding Tax
+
+Withholding tax is computed using progressive tax brackets from:
+
+- `withholding_tax_bracket`
+
+Formula:
+
+```text
+Withholding Tax =
+Base Tax
++ ((Taxable Income − Minimum Bracket Salary) × Excess Rate)
+```
+
+For payslip:
+
+1. Monthly taxable income is computed.
+2. Monthly withholding tax is calculated.
+3. Withholding tax is split into two pay periods.
+
+Formula:
+
+```text
+Semi-Monthly Withholding Tax =
+Monthly Withholding Tax / 2
+```
+
+---
+
+## Total Deductions
+
+Formula:
+
+```text
+Total Deductions =
+SSS
++ PhilHealth
++ Pag-IBIG
++ Withholding Tax
+```
+
+---
+
+## Take-Home Pay (Payslip)
+
+Formula:
+
+```text
+Take-Home Pay =
+(Gross Income + Benefits)
+− Total Deductions
+```
+
+---
+
+## Payroll Summary Computation (Monthly)
+
+Monthly payroll summary is generated using:
+
+- `vw_payroll_core`
+- `vw_payroll_summary`
+
+Payroll periods are configured in:
+
+- `payroll_period_config`
+
+where:
+
+- `period_type = 'PAYROLL'`
+
+This report consolidates payroll information for all employees including:
+
+- gross income
+- benefits
+- deductions
+- taxable income
+- withholding tax
+- net pay
+
+---
+
+## Validation Rules
+
+Validation scripts ensure payroll accuracy.
+
+Validation checks include:
+
+- Gross Income Validation
+- Deductions Validation
+- Net Pay Validation
+- Non-Negative Validation
+
+Example:
+
+```text
+NET PAY VALIDATION      PASS
+DEDUCTIONS VALIDATION   PASS
+NON-NEGATIVE VALIDATION PASS
+```
+
+---
+
+## Payroll Computation Rationale
+
+The system uses a hybrid computation basis for payroll processing.
+
+### Earnings Computation Basis
+
+Employee earnings are attendance-driven.
+
+Gross income is computed using actual attendance records within the payroll period.
+
+Formula:
+
+```text
+Gross Income = Daily Rate × Days Worked
+```
+
+This ensures employee earnings reflect actual attendance and payroll cutoff activity.
+
+---
+
+### Deduction Computation Basis
+
+Statutory deductions and withholding tax are computed using the employee’s monthly salary instead of cutoff earnings.
+
+This applies to:
+
+- SSS
+- PhilHealth
+- Pag-IBIG
+- Withholding Tax
+
+Reason:
+
+Government-mandated deductions and tax brackets are typically based on monthly compensation rather than semi-monthly attendance-based earnings.
+
+Because of this:
+
+- Monthly statutory deductions are computed first
+- Semi-monthly payslip deductions are derived by dividing monthly deductions by 2
+
+This ensures payroll deductions remain aligned with standard payroll practices while earnings remain attendance-sensitive.
+
+---
+
+### Attendance Interpretation
+
+Attendance computation uses employee attendance records within the configured payroll period.
+
+The system computes:
+
+- `days_worked` = count of distinct attendance dates
+- `total_hours_worked` = total rendered work hours
+
+Current implementation uses `days_worked` as the primary basis for gross income computation.
+
+While `hours_worked` is recorded and reported, it is currently used for monitoring and validation purposes only.
+
+---
+
+## System Assumptions and Limitations
+
+System assumptions:
+
+1. Payroll is fully attendance-driven.
+2. Daily rate uses a 22-working-day divisor.
+3. Payslip is computed semi-monthly.
+4. Payroll summary is computed monthly.
+5. Benefits are distributed equally per cutoff.
+6. Statutory deductions are based on monthly salary.
+7. Withholding tax uses monthly taxable income basis.
+
+Current limitations:
+
+- Allowances are currently sourced from staging data.
+- Payroll policies are simplified based on current MotorPH requirements.
+- Additional payroll features such as overtime, undertime, late deductions, and leave conversion are not yet implemented.
 
 # Submission Note
 
