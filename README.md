@@ -200,7 +200,7 @@ python python/transform_attendance.py
 \source dpa_reports/payslip.sql
 ```
 
-### Snapshots
+### Snapshot
 
 #### Payslip View with Validation (Nov. 1-15, 2024, First Cut-Off)
 
@@ -222,7 +222,7 @@ python python/transform_attendance.py
 \source dpa_reports/payroll.sql
 ```
 
-### Snapshots
+### Snapshot
 
 #### Payroll View with Validation (November 2024)
 
@@ -244,9 +244,9 @@ source dpa_reports/change_payroll_month.sql
 
 ### Snapshot
 
-[![Payroll Change](https://drive.google.com/uc?export=view&id=1FYBvCix7PHKUlj0JBG3Q-NZ4_PnjP15S)](https://drive.google.com/file/d/1FYBvCix7PHKUlj0JBG3Q-NZ4_PnjP15S/view?usp=sharing)
+[![Payslip Change](https://drive.google.com/uc?export=view&id=1P_zr8MACkCT5Ds5eY_M8NluT4c170BeS)](https://drive.google.com/file/d/1P_zr8MACkCT5Ds5eY_M8NluT4c170BeS/view?usp=sharing)
 
-[![Payroll Change to Decemver 2025](https://drive.google.com/uc?export=view&id=1ZqRaGD92IVSSCoYu07rBXG9WrDV0m4zy)](https://drive.google.com/file/d/1ZqRaGD92IVSSCoYu07rBXG9WrDV0m4zy/view?usp=sharing)
+[![Changed Payroll to Decemver 2025](https://drive.google.com/uc?export=view&id=1ZqRaGD92IVSSCoYu07rBXG9WrDV0m4zy)](https://drive.google.com/file/d/1ZqRaGD92IVSSCoYu07rBXG9WrDV0m4zy/view?usp=sharing)
 
 ---
 
@@ -269,7 +269,7 @@ DEDUCTIONS VALIDATION   PASS
 NON-NEGATIVE VALIDATION PASS
 ```
 
-### Sample Snaphots
+### Snaphot
 
 #### Payslip Validation (November 1-15, 2024, First Cut-Off)
 
