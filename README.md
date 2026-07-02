@@ -200,7 +200,7 @@ python python/transform_attendance.py
 \source dpa_reports/payslip.sql
 ```
 
-### Snapshot
+### Snapshot (Payslip View)
 
 #### Payslip View and Validation (Nov. 1-15, 2024, First Cut-Off)
 
@@ -243,7 +243,7 @@ python python/transform_attendance.py
 \source dpa_reports/payroll.sql
 ```
 
-### Snapshot
+### Snapshot (Payroll View)
 
 #### Payroll View with Validation (November 2024)
 
