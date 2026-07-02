@@ -1,3 +1,5 @@
 source dpa_seed/05_user_accounts_seed.sql;
 source dpa_seed/06_withholding_tax_seed.sql;
 source dpa_seed/07_statutory_contribution_seed.sql;
+source dpa_seed/08_employee_payslip_identity.sql;
+source dpa_seed/09_employee_payslip_identity_seed.sql;

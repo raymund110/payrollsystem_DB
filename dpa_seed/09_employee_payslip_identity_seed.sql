@@ -1,19 +1,5 @@
--- =========================================
--- Update Active Payslip Period
--- Used by Employee Payslip Reporting
--- =========================================
-
 USE payrollsystem_db;
 
-UPDATE payroll_period_config
-SET
-    period_name  = 'November 2024 Second Cutoff',
-    period_start = '2024-11-16',
-    period_end   = '2024-10-30'
-WHERE period_type = 'PAYSLIP'
-  AND is_active = TRUE;
-
--- Run to generate Payslip Number
 INSERT INTO employee_payslip_identity (
     employee_pk,
     period_start,

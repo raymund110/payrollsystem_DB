@@ -202,17 +202,38 @@ python python/transform_attendance.py
 
 ### Snapshot
 
-#### Payslip View with Validation (Nov. 1-15, 2024, First Cut-Off)
+#### Payslip View and Validation (Nov. 1-15, 2024, First Cut-Off)
 
-[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1-UQy6mNv8gnuQ6THULgak478L1xH0Orf)](https://drive.google.com/file/d/1-UQy6mNv8gnuQ6THULgak478L1xH0Orf/view?usp=sharing)
+##### Single Employee
 
-[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1fRvgoRw0QeiF3YzjbobVBd8vvnA6e6l9)](https://drive.google.com/file/d/1fRvgoRw0QeiF3YzjbobVBd8vvnA6e6l9/view?usp=sharing)
+[![Payslip View Single Employee First Cut-Off](https://drive.google.com/uc?export=view&id=1dgy-rx_jxdvMcBn1eFjIM2LnYV68NoeK)](https://drive.google.com/file/d/1dgy-rx_jxdvMcBn1eFjIM2LnYV68NoeK/view?usp=sharing)
+
+##### All Employees
+
+[![Payslip View All Employees First Cut-Off](https://drive.google.com/uc?export=view&id=1QXefUEwOafRx63-zBP8sosf0MCCe_g8v)](https://drive.google.com/file/d/1QXefUEwOafRx63-zBP8sosf0MCCe_g8v/view?usp=sharing)
+
+##### Validation
+
+[![Payslip View with Validation First Cut-off](https://drive.google.com/uc?export=view&id=1m73zkmwqRnc2jDQQUjn4qe2HqCnvwLQR)](https://drive.google.com/file/d/1m73zkmwqRnc2jDQQUjn4qe2HqCnvwLQR/view?usp=sharing)
+
+#### Payslip Cut-Off Update Scripts (Mandatory scripts to run)
+
+[![Payslip Cut-Off Change Script](https://drive.google.com/uc?export=view&id=1syE9UUa807bnX0pQ7cu8P3bhLRpmiWJy)](https://drive.google.com/file/d/1syE9UUa807bnX0pQ7cu8P3bhLRpmiWJy/view?usp=sharing)
 
 #### Payslip View with Validation (Nov. 16-30, 2024, Second Cut-Off)
 
-[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h)](https://drive.google.com/file/d/1yC9ef_Kd28Hh1OBkjirSUR_MTydvc8_h/view?usp=sharing)
+##### Single Employee
 
-[![Payslip View with Validation](https://drive.google.com/uc?export=view&id=10Y7K2GO1kmCAR0My7CNVQPqB0odNNmIC)](https://drive.google.com/file/d/10Y7K2GO1kmCAR0My7CNVQPqB0odNNmIC/view?usp=sharing)
+[![Payslip View Single Employee Second Cut-Off](https://drive.google.com/uc?export=view&id=1XOwdVv2vFKzuloqwZ5Bx7g2VWXeimAVH)](https://drive.google.com/file/d/1XOwdVv2vFKzuloqwZ5Bx7g2VWXeimAVH/view?usp=sharing)
+
+
+##### All Employees
+
+[![Payslip View All Employees Second Cut-Off](https://drive.google.com/uc?export=view&id=1My3SyQq6dc3yT10aU3kvsrmRH5t_1qXs)](https://drive.google.com/file/d/1My3SyQq6dc3yT10aU3kvsrmRH5t_1qXs/view?usp=sharing)
+
+##### Validation
+
+[![Payslip Validation Second Cut-Off](https://drive.google.com/uc?export=view&id=16Ot8D0zxvVPqGZHQTLvA2Jy6ihCbGlrM)](https://drive.google.com/file/d/16Ot8D0zxvVPqGZHQTLvA2Jy6ihCbGlrM/view?usp=sharing)
 
 ---
 

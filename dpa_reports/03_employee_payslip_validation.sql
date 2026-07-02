@@ -1,14 +1,4 @@
 -- Combined Validation Report for Employee 10005
-WITH active_period AS (
-    SELECT
-        period_name,
-        period_start,
-        period_end
-    FROM payroll_period_config
-    WHERE period_type = 'PAYSLIP'
-      AND is_active = TRUE
-    LIMIT 1
-)
 
 SELECT
     v.employee_id AS `EMPLOYEE ID`,
@@ -20,14 +10,12 @@ SELECT
     v.total_deductions AS `ACTUAL`,
     ROUND(v.sss + v.philhealth + v.pagibig + v.withholding_tax, 2) AS `EXPECTED`,
     CASE
-        WHEN v.total_deductions =
-             ROUND(v.sss + v.philhealth + v.pagibig + v.withholding_tax, 2)
+        WHEN v.total_deductions = ROUND(v.sss + v.philhealth + v.pagibig + v.withholding_tax, 2)
         THEN 'PASS'
         ELSE 'FAIL'
     END AS `RESULT`
-
 FROM vw_employee_payslip v
-CROSS JOIN active_period p
+JOIN payroll_period_config p ON p.period_type = 'PAYSLIP' AND p.is_active = TRUE
 WHERE v.employee_id = '10005'
 
 UNION ALL
@@ -42,14 +30,12 @@ SELECT
     v.take_home_pay,
     ROUND((v.gross_income + v.total_benefits) - v.total_deductions, 2),
     CASE
-        WHEN v.take_home_pay =
-             ROUND((v.gross_income + v.total_benefits) - v.total_deductions, 2)
+        WHEN v.take_home_pay = ROUND((v.gross_income + v.total_benefits) - v.total_deductions, 2)
         THEN 'PASS'
         ELSE 'FAIL'
     END
-
 FROM vw_employee_payslip v
-CROSS JOIN active_period p
+JOIN payroll_period_config p ON p.period_type = 'PAYSLIP' AND p.is_active = TRUE
 WHERE v.employee_id = '10005'
 
 UNION ALL
@@ -64,12 +50,10 @@ SELECT
     v.gross_income,
     ROUND(v.daily_rate * v.days_worked, 2),
     CASE
-        WHEN v.gross_income =
-             ROUND(v.daily_rate * v.days_worked, 2)
+        WHEN v.gross_income = ROUND(v.daily_rate * v.days_worked, 2)
         THEN 'PASS'
         ELSE 'FAIL'
     END
-
 FROM vw_employee_payslip v
-CROSS JOIN active_period p
+JOIN payroll_period_config p ON p.period_type = 'PAYSLIP' AND p.is_active = TRUE
 WHERE v.employee_id = '10005';
