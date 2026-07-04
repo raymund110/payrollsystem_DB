@@ -2,7 +2,7 @@
 -- Module: Payroll Summary Validation Reporting
 -- File: 08_payroll_summary_validation.sql
 -- Description:
--- Validates payroll summary computations for all employees in the active payroll period
+-- Validates payroll summary computations for selected employees in the active payroll period
 -- =========================================
 
 WITH active_period AS (
@@ -47,7 +47,7 @@ SELECT
 
 FROM vw_payroll_core v
 CROSS JOIN active_period p
-WHERE v.employee_no = '10005'
+WHERE employee_no IN ('10015', '10005', '10022', '10034', '10003')
 
 UNION ALL
 
@@ -76,7 +76,7 @@ SELECT
 
 FROM vw_payroll_core v
 CROSS JOIN active_period p
-WHERE v.employee_no = '10005'
+WHERE employee_no IN ('10015', '10005', '10022', '10034', '10003')
 
 UNION ALL
 
@@ -102,4 +102,4 @@ SELECT
 
 FROM vw_payroll_core v
 CROSS JOIN active_period p
-WHERE v.employee_no = '10005';
+WHERE employee_no IN ('10015', '10005', '10022', '10034', '10003');
